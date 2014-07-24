@@ -1,0 +1,98 @@
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+<!-- The CSS package above applies Google styling to buttons and other elements. -->
+
+<style>
+.branding-below {
+  bottom: 94px;
+}
+
+.branding-text {
+  left: 7px;
+  position: relative;
+  top: 3px;
+}
+
+.logo {
+  vertical-align: middle;
+}
+
+.height-75 {
+  height: 75%;
+}
+
+</style>
+
+
+<div class="sidebar content height-75">
+  <div id="eexcess-recommendations">
+    <div class="block form-group">
+      <label id="eexcess-recommendations-label" for="eexcess-recommendations"><b>Recommendations:</b></label>
+      <ul id="eexcess-recommendations-list">
+      
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar branding-below">
+  <div class="block" id="button-bar">
+      <button class="blue" id="get-recommendations">Get Recommendations</button>
+    </div>
+</div>
+
+<div class="sidebar bottom">
+  <img alt="Add-on logo" class="logo" width="222" height="70" src="http://eexcess.eu/wp-content/uploads/2013/04/eexcess_Logo_neu1.jpg">
+  <span class†="gray branding-text"> Recommendations by EEXCESS</span>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+</script>
+<script>
+  /**
+   * On document load, assign click handle to the "get-recommendations" button 
+   */ 
+  $(function() {
+    $('#get-recommendations').click(getRecommendations);
+  });
+
+  /**
+   * Runs a server-side function to get the recommendations for the user-selected text and update
+   * the sidebar UI with the results from the privacy proxy.
+   */
+  function getRecommendations() {
+    this.disabled = true;
+ 
+    google.script.run
+        .withSuccessHandler(
+          function(recommendations, element) { 
+            // Parsing the JSON string 
+            var o = JSON.parse(recommendations);
+            var container = $("#eexcess-recommendations-list");
+            // iterate the results and append the list elements
+            $.each(o.result, function() {
+               container.append("<li><a href='" + this.uri + "' target='_blank'>" + this.title + "</a></li>");
+            })
+            
+            element.disabled = false;
+          })
+        .withFailureHandler(
+          function(msg, element) {
+            showError(msg, $('#button-bar'));
+            element.disabled = false;
+          })
+        .withUserObject(this)
+        .getRecommendations();
+  }
+
+  /**
+   * Inserts a div that contains an error message after a given element.
+   *
+   * @param msg The error message to display.
+   * @param element The element after which to display the error.
+   */
+  function showError(msg, element) {
+    $("#error").remove();
+    var div = $('<div id="error" class="error">' + msg + '</div>');
+    $(element).after(div);
+  }
+</script>
