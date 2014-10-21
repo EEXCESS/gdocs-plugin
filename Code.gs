@@ -1,3 +1,17 @@
+/*  Copyright 2014 University of Passau
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 /**
  * Creates a menu entry in the Google Docs UI when the document is opened.
  *
@@ -100,7 +114,9 @@ function getRecommendations() {
     }
   }
   // privacy proxy URL
-  var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy/api/v1/recommend";
+  var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend"; 
+  // federated recommender
+  //var url = "http://eexcess.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/recommend";
   
   // POST payload
   var data = { "numResults" : 60, "contextKeywords" : [] };
@@ -111,19 +127,21 @@ function getRecommendations() {
     data["contextKeywords"].push({ "weight" : 1.0 / terms.length, "text" : terms[i] });
   }
   
-  Logger.log(data);
-  
   // Options object, that specifies the method, content type and payload of the HTTPRequest
   var options = {
     "method" : "POST",
     "contentType" : "application/json",
+    "origin" : "gdocs",
+    "headers" : {
+      "Accept" : "application/json"
+    },
     "payload" : JSON.stringify(data)
   };
- 
+   
   try {
-    return UrlFetchApp.fetch(url, options).getContentText();
+    var response = UrlFetchApp.fetch(url, options);
+    return response.getContentText();
   } catch(err) {
-    
+    throw err;
   }
 }
-
