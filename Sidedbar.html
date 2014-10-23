@@ -72,31 +72,46 @@
     // Insert Ajax loader icon
     $('<div id="ajax-loader-container"><img src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" width="16px" height="16px" alt="ajax loader"/></div>').insertAfter("#eexcess-recommendations-list");
 
+    var responded = false;
+    var timeout = false;
+
+    setTimeout(function() {
+      if(!responded) {
+        timeout = true;
+        removeAjaxLoader();
+        showError("The server timed out waiting for the request.", $('#button-bar'));
+        $('#get-recommendations').removeAttr("disabled");
+      }
+    }, 20000);
+
     google.script.run
         .withSuccessHandler(
           function(recommendations, element) { 
-            
-            removeAjaxLoader();
-            var container = $("#eexcess-recommendations-list");
-            // Parsing the JSON string 
-            var o = JSON.parse(recommendations);
+            if(!timeout) {
+              responded = true;
+              removeAjaxLoader();
+              var container = $("#eexcess-recommendations-list");
+              // Parsing the JSON string 
+              var o = JSON.parse(recommendations);
               
-            if(o.totalResults > 0) {
-              // iterate the results and append the list elements
-              $.each(o.result, function() {
-                container.append("<li><a href='" + this.uri + "' target='_blank'>" + this.title + "</a></li>");
-              })
-            } else {
-              showError("No results found", $('#button-bar'));  
+              if(o.totalResults > 0) {
+                // iterate the results and append the list elements
+                $.each(o.result, function() {
+                  container.append("<li><a href='" + this.uri + "' target='_blank'>" + this.title + "</a></li>");
+                })
+              } else {
+                showError("No results found", $('#button-bar'));  
+              }
+              element.disabled = false;
             }
-
-            element.disabled = false;
           })
         .withFailureHandler(
           function(msg, element) {
-            removeAjaxLoader();
-            showError(msg, $('#button-bar'));
-            element.disabled = false;
+            if(!timeout) {
+              removeAjaxLoader();
+              showError(msg, $('#button-bar'));
+              element.disabled = false;
+            }
           })
         .withUserObject(this)
         .getRecommendations();
