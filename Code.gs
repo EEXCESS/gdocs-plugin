@@ -1,11 +1,8 @@
 /*  Copyright 2014 University of Passau
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,17 +36,12 @@ function onInstall(e) {
   onOpen(e);
 }
 
-function onEdit(event)
-{
-  Logger.log("Last modified: " + (new Date()));
-}
-
 /**
  * Opens a sidebar in the document containing the add-on's user interface.
  */
 function showSidebar() {
   var ui = HtmlService.createHtmlOutputFromFile('Sidebar')
-  .setTitle('EEXCESS');
+  .setTitle('Recommendations');
   DocumentApp.getUi().showSidebar(ui);
 }
 
@@ -61,9 +53,11 @@ function showSidebar() {
  */
 function getSelectedText() {
   var selection = DocumentApp.getActiveDocument().getSelection();
+
   if (selection) {
     var text = [];
     var elements = selection.getRangeElements();
+
     for (var i = 0; i < elements.length; i++) {
       if (elements[i].isPartial()) {
         var element = elements[i].getElement().asText();
@@ -95,14 +89,33 @@ function getSelectedText() {
 }
 
 /**
+ * Gets the recommendations from the entered text.
+ *
+ * @param {String} text The text entered by the user.
+ *
+ * @return {String} The response as JSON string.
+ */
+function getRecommandationsFromInput(text) {
+  return callProxy(getTerms([text]));  
+}
+
+/**
  * Gets the recommendations from the selected user text.
  *
  * @return {String} The response as JSON string.
  */
 function getRecommendations() {
-  
-  var text = getSelectedText();
-  
+  return callProxy(getTerms(getSelectedText()));
+}
+
+/**
+ * Gets the recommendations from the selected user text.
+ *
+ * @param {Array<String>} text The text entered by the user as array.
+ *
+ * @return {Array<String>} The terms as an array.
+ */
+function getTerms(text) {
   var terms = [];
   
   // Split the text into terms
@@ -113,6 +126,18 @@ function getRecommendations() {
       terms.push(tmp[i].replace(/\s/g, "").replace(/[\.,#-\/!$%\^&\*;:{}=\-_`~()]/g,""));
     }
   }
+  
+  return terms;
+}
+
+/**
+ * Calls the privacy proxy
+ *
+ * @param {Array<String>} terms The single terms.
+ *
+ * @return {String} The response as JSON string.
+ */
+function callProxy(terms) {
   // privacy proxy URL
   var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend"; 
   // federated recommender
@@ -120,7 +145,6 @@ function getRecommendations() {
   
   // POST payload
   var data = { "numResults" : 60, "contextKeywords" : [] };
-
    
   // Fill the context array
   for(i in terms) {
@@ -137,11 +161,11 @@ function getRecommendations() {
     },
     "payload" : JSON.stringify(data)
   };
-   
   try {
     var response = UrlFetchApp.fetch(url, options);
     return response.getContentText();
   } catch(err) {
     throw err;
   }
+
 }
