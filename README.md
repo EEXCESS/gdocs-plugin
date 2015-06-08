@@ -3,8 +3,9 @@
 ## How this addon works
 
 1. Go to: https://docs.google.com/document/d/1hqLocWCyKMQQr254gDO_BWfm6tDBmqMFz7IPqOvbKhA/edit 
-2. Activate the plugin (Top Menu: Addons -> EEXCESS -> Start)
-3. Select a piece of text and click the Get Recommendations button inside the sidebar. After a short while the recommendations will be displayed above the Get Recommendations button.
+2. Login with your Google Account to be able to use this addon 
+3. Activate the plugin (Top Menu: Addons -> EEXCESS -> Start)
+4. Select a piece of text and click the Get Recommendations button inside the sidebar. After a short while the recommendations will be displayed above the Get Recommendations button.
 
 ## Source Code
 
