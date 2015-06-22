@@ -1,20 +1,5 @@
 <?!= include('Stylesheet') ?>
 
-<style>
-    .fixed-top {
-        position: fixed;
-        top: 0;
-        right: 0;
-        left: 0;
-        z-index: 1030;
-        width: 100%;
-    }
-    #eexcess-recommendations {
-        top:65px;
-        padding-top:0px;
-    }
-</style>
-
 <div class="sidebar fixed-top">
     <div id="search-container" class="form-group inline-form">
         <input id="eexcess-search" placeholder="Search" aria-label="Search" type="search" />
@@ -23,17 +8,14 @@
     <div class="block"></div>
 </div>
 
-<div id="eexcess-recommendations" class="sidebar form-group height-75">
+<div id="eexcess-recommendations" class="sidebar form-group">
     <ul id="eexcess-recommendations-list">
     </ul>
-</div>
-
-<div class="sidebar branding-below">
-    <div class="block" id="button-bar">
-    </div>
+    <div id="info" class="gray">Please select some text or use the search bar.</div>
 </div>
 
 <div class="sidebar bottom">
+    <div id="bottom-separator" class="block"></div>
     <img alt="Add-on logo" class="logo" width="222" height="70" src="http://eexcess.eu/wp-content/uploads/2013/04/eexcess_Logo_neu1.jpg">
     <span class†="gray branding-text"> Recommendations by EEXCESS</span>
 </div>

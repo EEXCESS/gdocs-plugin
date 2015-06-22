@@ -2,6 +2,17 @@
 <!-- The CSS package above applies Google styling to buttons and other elements. -->
 
 <style>
+    #bottom-separator {
+        padding-top: 12px;
+    }
+    .fixed-top {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 1030;
+        width: 100%;
+    }
     .inline-form {
         width:100%;
     }
@@ -14,9 +25,6 @@
         width: 72px;
         height: 29px;
     }
-    .branding-below {
-        bottom: 94px;
-    }
     .branding-text {
         left: 7px;
         position: relative;
@@ -24,9 +32,6 @@
     }
     .logo {
         vertical-align: middle;
-    }
-    .height-75 {
-        height: 75%;
     }
     #ajax-loader-container {
         text-align: center;
@@ -39,6 +44,10 @@
 
     #eexcess-recommendations {
         clear: both;
+        top:65px;
+        padding-top:0;
+        bottom: 125px;
+        height: auto;
     }
 
     .result-details {

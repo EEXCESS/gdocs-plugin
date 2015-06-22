@@ -30,10 +30,12 @@
      * the sidebar UI with the results from the privacy proxy.
      */
     function getRecommendationsFromInput() {
+        removeInfo();
         removeError();
+
         var keyword = $("#eexcess-search").val();
         if(keyword == "") {
-            showError("Please enter some text.", $('#button-bar'));
+            showError("Please enter some text.");
         } else {
             this.disabled = true;
             fetchAndDisplayRecommendations(keyword, this);
@@ -86,7 +88,7 @@
                 removeAjaxLoader();
 
                 if (lastSearchedText == text)
-                    showError("The server timed out waiting for the request.", $('#button-bar'));
+                    showError("The server timed out waiting for the request.");
 
                 if (button)
                     button.disabled = false;
@@ -110,7 +112,7 @@
                 function(errorMsg, button) {
                     if(!timeout && lastSearchedText ==  text) {
                         removeAjaxLoader();
-                        showError(errorMsg, $('#button-bar'));
+                        showError(errorMsg);
 
                         if (button)
                             button.disabled = false;
@@ -195,7 +197,7 @@
                 container.append(template);
             })
         } else {
-            showError("No results found", $('#button-bar'));
+            showError("No results found");
         }
     }
 
@@ -205,10 +207,10 @@
      * @param msg The error message to display.
      * @param element The element after which to display the error.
      */
-    function showError(msg, element) {
+    function showError(msg) {
         removeError();
         var div = $('<div id="error" class="error">' + msg + '</div>');
-        $(element).after(div);
+        $("#eexcess-recommendations-list").after(div);
     }
 
     /**
@@ -219,11 +221,20 @@
     }
 
     /**
+     * Removes the initially added info message.
+     */
+    function removeInfo() {
+        $("#info").remove();
+    }
+
+    /**
      * Inserts the ajax loader icon.
      */
     function showAjaxLoader() {
-        if ($("#ajax-loader-container").length == 0)
-            $('<div id="ajax-loader-container"><img src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" width="16px" height="16px" alt="ajax loader"/></div>').insertAfter("#eexcess-recommendations-list");
+        if ($("#ajax-loader-container").length == 0) {
+            var div = $('<div id="ajax-loader-container"><img src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" width="16px" height="16px" alt="ajax loader"/></div>');
+            $("#eexcess-recommendations-list").after(div);
+        }
     }
 
     /**
