@@ -1,20 +1,28 @@
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
 <script>
+    // constants
+    var REFRESH_INTERVAL = 1000; // update selected text inspector every 1 second
+    var TIMEOUT = 20000; // timout of 20s for fetching recommendations
+
+    // global variables
+    var lastSelectedText;
+    var lastSearchedText;
+
     /**
      * On document load.
      */
     $(function() {
-        // assign click handle to the "get-recommendations" button
-        $('#get-recommendations').click(getRecommendations);
-
+        // init search bar
         $("#eexcess-search").keyup(function (e) {
-            if (e.keyCode == 13) {
+            if (e.keyCode == 13) { // Enter keycode
                 $('#btn-search').click();
             }
         });
 
         $('#btn-search').click(getRecommendationsFromInput);
+
+        inspectSelectedText();
     });
 
     /**
@@ -28,92 +36,112 @@
             showError("Please enter some text.", $('#button-bar'));
         } else {
             this.disabled = true;
-            // Clear previously loaded recommendations
-            $("#eexcess-recommendations-list").empty();
-            // Remove error messages
-            removeError();
-            // Insert Ajax loader icon
-            showAjaxLoader();
-            var responded = false;
-            var timeout = false;
-            setTimeout(function() {
-                if(!responded) {
-                    timeout = true;
-                    removeAjaxLoader();
-                    showError("The server timed out waiting for the request.", $('#button-bar'));
-                    $('#btn-search').removeAttr("disabled");
-                }
-            }, 20000);
-
-            google.script.run
-                    .withSuccessHandler(
-                    function(recommendations, element) {
-                        if(!timeout) {
-                            responded = true;
-                            removeAjaxLoader();
-                            // Display Results
-                            showResultList(recommendations);
-                            element.disabled = false;
-                        }
-                    })
-                    .withFailureHandler(
-                    function(msg, element) {
-                        if(!timeout) {
-                            removeAjaxLoader();
-                            showError(msg, $('#button-bar'));
-                            element.disabled = false;
-                        }
-                    })
-                    .withUserObject(this)
-                    .getRecommandationsFromInput(keyword);
-
+            fetchAndDisplayRecommendations(keyword, this);
         }
     }
 
+    function inspectSelectedText() {
+        google.script.run
+                .withSuccessHandler(
+                    function(selectedText) {
+                        if (selectedText.length > 0 && !arraysEqual(selectedText, lastSelectedText)) {
+                            lastSelectedText = selectedText;
+                            $("#eexcess-search").val(selectedText);
+                            $('#btn-search').click();
+                        }
+                    })
+                .withFailureHandler(
+                    function() {
+                        // ignore errors
+                    })
+                .getSelectedText();
+
+        window.setTimeout(inspectSelectedText, REFRESH_INTERVAL);
+    }
+
     /**
-     * Runs a server-side function to get the recommendations for the user-selected text and update
-     * the sidebar UI with the results from the privacy proxy.
+     * Runs a server-side function to fetch the recommendations for the given text and updates the sidebar UI with the
+     * results from the privacy proxy  or displays and error message in the sidebar.
+     *
+     * @param {String} or {Array<String>} text  text for which the recommendations should be fetched
+     * @param button    disabled button which triggered the action or undefined if action was not triggered by a button
      */
-    function getRecommendations() {
-        $('#eexcess-search').val('');
-        this.disabled = true;
-        // Clear previously loaded recommendations
-        $("#eexcess-recommendations-list").empty();
-        // Remove error messages
+    function fetchAndDisplayRecommendations(text, button){
+        // Remove error messages TODO remove after error messages displayed in recommendations list
         removeError();
+
+        // Clear previously loaded recommendations and displayed errors
+        $("#eexcess-recommendations-list").empty();
+
         // Insert Ajax loader icon
         showAjaxLoader();
+
         var responded = false;
         var timeout = false;
+        lastSearchedText = text;
+
         setTimeout(function() {
             if(!responded) {
                 timeout = true;
                 removeAjaxLoader();
-                showError("The server timed out waiting for the request.", $('#button-bar'));
-                $('#get-recommendations').removeAttr("disabled");
+
+                if (lastSearchedText == text)
+                    showError("The server timed out waiting for the request.", $('#button-bar'));
+
+                if (button)
+                    button.disabled = false;
             }
-        }, 20000);
+        }, TIMEOUT);
+
         google.script.run
                 .withSuccessHandler(
-                function(recommendations, element) {
-                    if(!timeout) {
+                function(recommendations, button) {
+                    if(!timeout && lastSearchedText == text){
                         responded = true;
                         removeAjaxLoader();
                         // Display Results
                         showResultList(recommendations);
-                        element.disabled = false;
+
+                        if (button)
+                            button.disabled = false;
                     }
                 })
                 .withFailureHandler(
-                function(msg, element) {
-                    if(!timeout) {
+                function(errorMsg, button) {
+                    if(!timeout && lastSearchedText ==  text) {
                         removeAjaxLoader();
-                        showError(msg, $('#button-bar'));
-                        element.disabled = false;
+                        showError(errorMsg, $('#button-bar'));
+
+                        if (button)
+                            button.disabled = false;
                     }
                 })
-                .withUserObject(this)
-                .getRecommendations();
+                .withUserObject(button)
+                .fetchRecommendations([text]);
+    }
+
+    /**
+     * Compares two 1-dimensional arrays by their content.
+     *
+     * @param a array 1
+     * @param b array 2
+     */
+    function arraysEqual(a, b) {
+        if (a === b)
+            return true;
+
+        if (a == null || b == null)
+            return false;
+
+        if (a.length != b.length)
+            return false;
+
+        for (var i = 0; i < a.length; ++i) {
+            if (a[i] !== b[i])
+                return false;
+        }
+
+        return true;
     }
 
     /**
@@ -191,16 +219,17 @@
     }
 
     /**
+     * Inserts the ajax loader icon.
+     */
+    function showAjaxLoader() {
+        if ($("#ajax-loader-container").length == 0)
+            $('<div id="ajax-loader-container"><img src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" width="16px" height="16px" alt="ajax loader"/></div>').insertAfter("#eexcess-recommendations-list");
+    }
+
+    /**
      * Removes the ajax loader icon (spinner) from the DOM.
      */
     function removeAjaxLoader() {
         $('#ajax-loader-container').remove();
-    }
-
-    /**
-     * Inserts the ajax loader icon.
-     */
-    function showAjaxLoader() {
-        $('<div id="ajax-loader-container"><img src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" width="16px" height="16px" alt="ajax loader"/></div>').insertAfter("#eexcess-recommendations-list");
     }
 </script>

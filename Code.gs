@@ -89,9 +89,11 @@ function getSelectedText() {
         }
       }
     }
+
     if (text.length == 0) {
       throw 'Please select some text.';
     }
+
     return text;
   } else {
     throw 'Please select some text.';
@@ -99,23 +101,13 @@ function getSelectedText() {
 }
 
 /**
- * Gets the recommendations from the entered text.
+ * Fetches the recommendations for the given text.
  *
- * @param {String} text The text entered by the user.
- *
+ * @param {Array<String>}   text for which the recommendations should be fetched
  * @return {String} The response as JSON string.
  */
-function getRecommandationsFromInput(text) {
-  return callProxy(getTerms([text]));
-}
-
-/**
- * Gets the recommendations from the selected user text.
- *
- * @return {String} The response as JSON string.
- */
-function getRecommendations() {
-  return callProxy(getTerms(getSelectedText()));
+function fetchRecommendations(text) {
+  return callProxy(getTerms(text));
 }
 
 /**
