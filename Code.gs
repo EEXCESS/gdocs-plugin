@@ -42,7 +42,7 @@ function onInstall(e) {
  */
 function showSidebar() {
   var ui = HtmlService.createTemplateFromFile('Sidebar').evaluate()
-      .setTitle('Recommendations');
+      .setTitle('E-Explorer');
   DocumentApp.getUi().showSidebar(ui);
 }
 
