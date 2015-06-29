@@ -2,16 +2,19 @@
 <!-- The CSS package above applies Google styling to buttons and other elements. -->
 
 <style>
-    #bottom-separator {
-        padding-top: 12px;
+    /* general */
+    .block {
+        border-top: 1px solid gray;
     }
+
+    /* search bar */
     .fixed-top {
         position: fixed;
         top: 0;
         right: 0;
         left: 0;
         z-index: 1030;
-        width: 100%;
+        width: auto;
     }
     .inline-form {
         width:100%;
@@ -25,26 +28,14 @@
         width: 72px;
         height: 29px;
     }
-    .branding-text {
-        left: 7px;
-        position: relative;
-        top: 3px;
-    }
-    .logo {
-        vertical-align: middle;
-    }
-    #ajax-loader-container {
-        text-align: center;
-        margin-top: 50px;
-    }
-
     #search-container {
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
+    /* recommendations */
     #eexcess-recommendations {
         clear: both;
-        top:65px;
+        top:66px;
         padding-top:0;
         bottom: 125px;
         height: auto;
@@ -52,10 +43,6 @@
 
     .result-details {
         margin: 0px;
-    }
-
-    .block {
-        border-top: 1px solid gray;
     }
 
     /* ResultList styling */
@@ -118,5 +105,36 @@
     .li-provider {
         margin: 0px;
         font-size: 10px;
+    }
+
+    /* bottom branding */
+    .branding-container {
+        padding-top: 12px;
+        width: 165px;
+        position: relative;
+        margin-left: auto ;
+        margin-right: auto ;
+    }
+    .branding-container .logo {
+        width: 121px;
+        max-width: 175px;
+        height: 40px;
+    }
+    .branding-container .info-link {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        z-index: 1;
+    }
+    .branding-text {
+        position: relative;
+        top: 3px;
+        text-align: center;
+    }
+
+    /* other stuff */
+    #ajax-loader-container {
+        text-align: center;
+        margin-top: 50px;
     }
 </style>
