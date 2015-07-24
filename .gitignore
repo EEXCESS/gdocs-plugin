@@ -3,6 +3,4 @@
 *.iml
 
 # debug files
-add-ons.css
-Debug.html
-ServerResponse.json
+debug/
