@@ -18,10 +18,10 @@
  *     running in, inspect e.authMode.
  */
 function onOpen(e) {
-  DocumentApp.getUi().createAddonMenu()
-      .addItem('Start', 'showSidebar')
-      .addToUi();
-  DocumentApp.getUi().createAddonMenu().addSeparator();
+    DocumentApp.getUi().createAddonMenu()
+        .addItem('Start', 'showSidebar')
+        .addToUi();
+    DocumentApp.getUi().createAddonMenu().addSeparator();
 }
 
 /**
@@ -34,16 +34,16 @@ function onOpen(e) {
  *     AuthMode.NONE.)
  */
 function onInstall(e) {
-  onOpen(e);
+    onOpen(e);
 }
 
 /**
  * Opens a sidebar in the document containing the add-on's user interface.
  */
 function showSidebar() {
-  var ui = HtmlService.createTemplateFromFile('Sidebar').evaluate()
-      .setTitle('E-Explorer');
-  DocumentApp.getUi().showSidebar(ui);
+    var ui = HtmlService.createTemplateFromFile('Sidebar').evaluate()
+        .setTitle('E-Explorer');
+    DocumentApp.getUi().showSidebar(ui);
 }
 
 /**
@@ -52,7 +52,7 @@ function showSidebar() {
  * @return {string} The file's content.
  */
 function include(file) {
-  return HtmlService.createTemplateFromFile(file).evaluate().getContent();
+    return HtmlService.createTemplateFromFile(file).evaluate().getContent();
 }
 
 /**
@@ -62,42 +62,42 @@ function include(file) {
  * @return {Array.<string>} The selected text.
  */
 function getSelectedText() {
-  var selection = DocumentApp.getActiveDocument().getSelection();
+    var selection = DocumentApp.getActiveDocument().getSelection();
 
-  if (selection) {
-    var text = [];
-    var elements = selection.getRangeElements();
+    if (selection) {
+        var text = [];
+        var elements = selection.getRangeElements();
 
-    for (var i = 0; i < elements.length; i++) {
-      if (elements[i].isPartial()) {
-        var element = elements[i].getElement().asText();
-        var startIndex = elements[i].getStartOffset();
-        var endIndex = elements[i].getEndOffsetInclusive();
+        for (var i = 0; i < elements.length; i++) {
+            if (elements[i].isPartial()) {
+                var element = elements[i].getElement().asText();
+                var startIndex = elements[i].getStartOffset();
+                var endIndex = elements[i].getEndOffsetInclusive();
 
-        text.push(element.getText().substring(startIndex, endIndex + 1));
-      } else {
-        var element = elements[i].getElement();
-        // Only translate elements that can be edited as text; skip images and
-        // other non-text elements.
-        if (element.editAsText) {
-          var elementText = element.asText().getText();
-          // This check is necessary to exclude images, which return a blank
-          // text element.
-          if (elementText != '') {
-            text.push(elementText);
-          }
+                text.push(element.getText().substring(startIndex, endIndex + 1));
+            } else {
+                var element = elements[i].getElement();
+                // Only translate elements that can be edited as text; skip images and
+                // other non-text elements.
+                if (element.editAsText) {
+                    var elementText = element.asText().getText();
+                    // This check is necessary to exclude images, which return a blank
+                    // text element.
+                    if (elementText != '') {
+                        text.push(elementText);
+                    }
+                }
+            }
         }
-      }
-    }
 
-    if (text.length == 0) {
-      throw 'Please select some text.';
-    }
+        if (text.length == 0) {
+            throw 'Please select some text.';
+        }
 
-    return text;
-  } else {
-    throw 'Please select some text.';
-  }
+        return text;
+    } else {
+        throw 'Please select some text.';
+    }
 }
 
 /**
@@ -107,7 +107,7 @@ function getSelectedText() {
  * @return {String} The response as JSON string.
  */
 function fetchRecommendations(text) {
-  return callProxy(getTerms(text));
+    return callProxy(getTerms(text));
 }
 
 /**
@@ -118,18 +118,18 @@ function fetchRecommendations(text) {
  * @return {Array<String>} The terms as an array.
  */
 function getTerms(text) {
-  var terms = [];
+    var terms = [];
 
-  // Split the text into terms
-  for(t in text) {
-    var tmp = text[t].split(" ");
-    for(i in tmp) {
-      // Replace multiple whitespaces and punctuation marks from the terms
-      terms.push(tmp[i].replace(/\s/g, "").replace(/[\.,#-\/!$%\^&\*;:{}=\-_`~()]/g,""));
+    // Split the text into terms
+    for(t in text) {
+        var tmp = text[t].split(" ");
+        for(i in tmp) {
+            // Replace multiple whitespaces and punctuation marks from the terms
+            terms.push(tmp[i].replace(/\s/g, "").replace(/[\.,#-\/!$%\^&\*;:{}=\-_`~()]/g,""));
+        }
     }
-  }
 
-  return terms;
+    return terms;
 }
 
 /**
@@ -140,34 +140,50 @@ function getTerms(text) {
  * @return {String} The response as JSON string.
  */
 function callProxy(terms) {
-  // privacy proxy URL
-  var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend";
-  // federated recommender
-  //var url = "http://eexcess.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/recommend";
+    // privacy proxy URL
+    var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend";
+    // federated recommender
+    //var url = "http://eexcess.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/recommend";
 
-  // POST payload
-  var data = { "numResults" : 60, "contextKeywords" : [] };
+    // POST payload
+    var data = {"numResults": 60, "contextKeywords": []};
 
-  // Fill the context array
-  for(i in terms) {
-    data["contextKeywords"].push({ "weight" : 1.0 / terms.length, "text" : terms[i] });
-  }
+    // Fill the context array
+    for (i in terms) {
+        data["contextKeywords"].push({"weight": 1.0 / terms.length, "text": terms[i]});
+    }
 
-  // Options object, that specifies the method, content type and payload of the HTTPRequest
-  var options = {
-    "method" : "POST",
-    "contentType" : "application/json",
-    "origin" : "gdocs",
-    "headers" : {
-      "Accept" : "application/json"
-    },
-    "payload" : JSON.stringify(data)
-  };
-  try {
-    var response = UrlFetchApp.fetch(url, options);
-    return response.getContentText();
-  } catch(err) {
-    throw err;
-  }
+    // Options object, that specifies the method, content type and payload of the HTTPRequest
+    var options = {
+        "method": "POST",
+        "contentType": "application/json",
+        "origin": "gdocs",
+        "headers": {
+            "Accept": "application/json"
+        },
+        "payload": JSON.stringify(data)
+    };
+    try {
+        var response = UrlFetchApp.fetch(url, options);
+        return response.getContentText();
+    } catch (err) {
+        throw err;
+    }
+}
 
+function msg(key) {
+    if (!this.messages){
+        var locale = Session.getActiveUserLocale();
+        var file;
+
+        if (locale == 'de') {
+            file = 'messages_de';
+        } else { // use default locale 'en'
+            file = 'messages'
+        }
+
+        this.messages = JSON.parse(HtmlService.createTemplateFromFile(file).evaluate().getContent());
+    }
+
+    return this.messages[key];
 }
