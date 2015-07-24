@@ -1,0 +1,140 @@
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+<!-- The CSS package above applies Google styling to buttons and other elements. -->
+
+<style>
+    /* general */
+    .block {
+        border-top: 1px solid gray;
+    }
+
+    /* search bar */
+    .fixed-top {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 1030;
+        width: auto;
+    }
+    .inline-form {
+        width:100%;
+    }
+    .inline-form input {
+        width: 204px;
+        height: 29px;
+        float: left;
+    }
+    .inline-form button {
+        width: 72px;
+        height: 29px;
+    }
+    #search-container {
+        margin-bottom: 12px;
+    }
+
+    /* recommendations */
+    #eexcess-recommendations {
+        clear: both;
+        top:66px;
+        padding-top:0;
+        bottom: 125px;
+        height: auto;
+    }
+
+    .result-details {
+        margin: 0px;
+    }
+
+    /* ResultList styling */
+    #eexcess-recommendations-list {
+        padding-left: 2px;
+        margin-top:0px;
+    }
+
+    #eexcess-recommendations-list li {
+        min-height: 70px;
+        border-bottom: 1px solid #ccc;
+        display: table;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    #eexcess-recommendations-list li:hover {
+        background-color: rgba(29,144,78,0.2);
+    }
+
+    #eexcess-recommendations-list a:hover {
+        text-decoration: none;
+    }
+
+    .inner {
+        display: table-row;
+        overflow: hidden;
+    }
+
+    .li-img {
+        display: table-cell;
+        vertical-align: middle;
+        width: 20%;
+        padding-right: 1em;
+    }
+
+    .li-img img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    .li-text {
+        display: table-cell;
+        vertical-align: middle;
+        width: 70%;
+        padding-right: 1em;
+    }
+
+    .li-head {
+        margin: 0;
+        font-size: 12px;
+    }
+    .li-summary {
+        margin: 0 0 4px 0;
+        display: block;
+        color: #999;
+    }
+
+    .li-provider {
+        margin: 0px;
+        font-size: 10px;
+    }
+
+    /* bottom branding */
+    .branding-container {
+        padding-top: 12px;
+        width: 165px;
+        position: relative;
+        margin-left: auto ;
+        margin-right: auto ;
+    }
+    .branding-container .logo {
+        width: 121px;
+        max-width: 175px;
+        height: 40px;
+    }
+    .branding-container .info-link {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        z-index: 1;
+    }
+    .branding-text {
+        position: relative;
+        top: 3px;
+        text-align: center;
+    }
+
+    /* other stuff */
+    #ajax-loader-container {
+        text-align: center;
+        margin-top: 50px;
+    }
+</style>

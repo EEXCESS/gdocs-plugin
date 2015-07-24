@@ -1,14 +1,15 @@
 /*  Copyright 2014 University of Passau
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
 /**
  * Creates a menu entry in the Google Docs UI when the document is opened.
  *
@@ -40,9 +41,18 @@ function onInstall(e) {
  * Opens a sidebar in the document containing the add-on's user interface.
  */
 function showSidebar() {
-  var ui = HtmlService.createHtmlOutputFromFile('Sidebar')
-  .setTitle('Recommendations');
+  var ui = HtmlService.createTemplateFromFile('Sidebar').evaluate()
+      .setTitle('E-Explorer');
   DocumentApp.getUi().showSidebar(ui);
+}
+
+/**
+ * Returns the contents of a HTML file.
+ * @param {string} file The name of the file to retrieve.
+ * @return {string} The file's content.
+ */
+function include(file) {
+  return HtmlService.createTemplateFromFile(file).evaluate().getContent();
 }
 
 /**
@@ -79,9 +89,11 @@ function getSelectedText() {
         }
       }
     }
+
     if (text.length == 0) {
       throw 'Please select some text.';
     }
+
     return text;
   } else {
     throw 'Please select some text.';
@@ -89,23 +101,13 @@ function getSelectedText() {
 }
 
 /**
- * Gets the recommendations from the entered text.
+ * Fetches the recommendations for the given text.
  *
- * @param {String} text The text entered by the user.
- *
+ * @param {Array<String>}   text for which the recommendations should be fetched
  * @return {String} The response as JSON string.
  */
-function getRecommandationsFromInput(text) {
-  return callProxy(getTerms([text]));  
-}
-
-/**
- * Gets the recommendations from the selected user text.
- *
- * @return {String} The response as JSON string.
- */
-function getRecommendations() {
-  return callProxy(getTerms(getSelectedText()));
+function fetchRecommendations(text) {
+  return callProxy(getTerms(text));
 }
 
 /**
@@ -117,7 +119,7 @@ function getRecommendations() {
  */
 function getTerms(text) {
   var terms = [];
-  
+
   // Split the text into terms
   for(t in text) {
     var tmp = text[t].split(" ");
@@ -126,7 +128,7 @@ function getTerms(text) {
       terms.push(tmp[i].replace(/\s/g, "").replace(/[\.,#-\/!$%\^&\*;:{}=\-_`~()]/g,""));
     }
   }
-  
+
   return terms;
 }
 
@@ -139,18 +141,18 @@ function getTerms(text) {
  */
 function callProxy(terms) {
   // privacy proxy URL
-  var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend"; 
+  var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend";
   // federated recommender
   //var url = "http://eexcess.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/recommend";
-  
+
   // POST payload
   var data = { "numResults" : 60, "contextKeywords" : [] };
-   
+
   // Fill the context array
   for(i in terms) {
     data["contextKeywords"].push({ "weight" : 1.0 / terms.length, "text" : terms[i] });
   }
-  
+
   // Options object, that specifies the method, content type and payload of the HTTPRequest
   var options = {
     "method" : "POST",
