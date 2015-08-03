@@ -1,18 +1,13 @@
 <?!= include('Stylesheet') ?>
 
-<div class="sidebar fixed-top">
+<div id="header" class="sidebar fixed-top">
     <div id="search-container" class="form-group inline-form">
-        <input id="eexcess-search" placeholder="Search" aria-label="Search" type="search" />
+        <input id="eexcess-search" placeholder="Search" aria-label="<?!= msg('SEARCHBAR_SEARCH') ?>" type="search" />
         <button class="action" id="btn-search"><?!= msg('SEARCHBAR_SEARCH') ?></button>
     </div>
-    <div class="block"></div>
 </div>
 
-<div id="eexcess-recommendations" class="sidebar form-group">
-    <ul id="eexcess-recommendations-list">
-    </ul>
-    <div id="info" class="gray"><?!= msg('RECOMMENDATIONS_INITIAL_INFO') ?></div>
-</div>
+<div id="result-container" class="sidebar form-group"></div>
 
 <div class="sidebar bottom">
     <div class="block"></div>
@@ -25,4 +20,5 @@
     </div>
 </div>
 
+<?!= include('SearchResultList') ?>
 <?!= include('Scripts') ?>

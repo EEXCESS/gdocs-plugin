@@ -4,3 +4,6 @@
 
 # debug files
 debug/
+
+# git
+*.orig

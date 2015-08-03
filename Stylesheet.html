@@ -28,83 +28,125 @@
         width: 72px;
         height: 29px;
     }
-    #search-container {
-        margin-bottom: 12px;
-    }
 
-    /* recommendations */
-    #eexcess-recommendations {
-        clear: both;
-        top:66px;
-        padding-top:0;
+    /* SearchResultList styling */
+    #result-container {
+        top: 80px;
         bottom: 100px;
-        height: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-top: 0;
+        padding-bottom: 0;
     }
 
-    .result-details {
-        margin: 0px;
+    .eexcess-tabs {
+        list-style: none;
+        margin:0;
+        padding:0;
+        display: block;
+        border-bottom: 1px solid #ddd;
     }
 
-    /* ResultList styling */
-    #eexcess-recommendations-list {
-        padding-left: 2px;
-        margin-top:0px;
+    .eexcess-tabs:before {
+        display:table;
+        content:' ';
     }
 
-    #eexcess-recommendations-list li {
-        min-height: 70px;
+    .eexcess-tabs:after {
+        clear:both;
+        display:table;
+        content: ' ';
+    }
+
+    .eexcess-tabs li {
+        display: block;
+        float:left;
+        margin-bottom: -1px;
+    }
+
+    .eexcess-tabs li a {
+        padding: 5px;
+        padding-top: 10px;
+        display: block;
+        color: #4a4a4a;
+        text-decoration: none;
+        border-bottom: 4px solid transparent;
+        margin-right: 2px;
+        margin-left: 2px;
+    }
+
+    .eexcess-tabs li.active a {
+        color: #222;
+        font-weight: bold;
+        border-bottom: 4px solid #4285f4;
+    }
+
+    .eexcess-tabs li a:hover {
+        border-bottom: 4px solid #646464;
+    }
+
+    /* other stuff */
+    #message-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    #ajax-loader {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* results */
+    #result-list {
+        padding: 0;
+        margin: 0;
+    }
+
+    #result-list li {
+        overflow: hidden;
         border-bottom: 1px solid #ccc;
-        display: table;
+        list-style: none;
         border-collapse: collapse;
         width: 100%;
+        padding-right: 10px;
+        padding-left: 10px;
+        padding-top: 10px;
     }
 
-    #eexcess-recommendations-list li:hover {
-        background-color: rgba(29,144,78,0.2);
+    #result-list li:hover {
+        background-color: #eeeeee;
     }
 
-    #eexcess-recommendations-list a:hover {
+    #result-list a:hover {
         text-decoration: none;
     }
 
-    .inner {
-        display: table-row;
-        overflow: hidden;
+    .result-item {
+        position: relative;
     }
 
-    .li-img {
-        display: table-cell;
-        vertical-align: middle;
-        width: 20%;
-        padding-right: 1em;
+    .result-content {
+        width: 240px;
+        min-height: 44px;
+        padding-bottom: 10px;
     }
 
-    .li-img img {
-        display: block;
-        width: 100%;
-        height: auto;
+    .result-image {
+        width: 44px;
+        height: 44px;
+        padding-right: 10px;
     }
 
-    .li-text {
-        display: table-cell;
-        vertical-align: middle;
-        width: 70%;
-        padding-right: 1em;
+    .result-title  {
+        color: #222;
     }
 
-    .li-head {
-        margin: 0;
-        font-size: 12px;
-    }
-    .li-summary {
-        margin: 0 0 4px 0;
-        display: block;
-        color: #999;
-    }
-
-    .li-provider {
-        margin: 0px;
-        font-size: 10px;
+    .partner-icon {
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        right: 0;
+        bottom: 0;
     }
 
     /* bottom branding */
@@ -130,11 +172,5 @@
         position: relative;
         top: 3px;
         text-align: center;
-    }
-
-    /* other stuff */
-    #ajax-loader-container {
-        text-align: center;
-        margin-top: 50px;
     }
 </style>
