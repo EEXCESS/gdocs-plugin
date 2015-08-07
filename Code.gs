@@ -149,7 +149,7 @@ function callProxy(terms) {
     //var data = {"numResults": 60, "contextKeywords": []};
     var data = {"numResults": 15, "contextKeywords": []};
 
-    // Fill the context array
+     // Fill the context array
     for (i in terms) {
         data["contextKeywords"].push({"weight": 1.0 / terms.length, "text": terms[i]});
     }

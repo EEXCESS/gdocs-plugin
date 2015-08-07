@@ -1,44 +1,102 @@
 <script type="text/javascript">
+    /**
+     * Initializes the search result list displaying the recommendations.
+     *
+     * @param tabContainer  container for inserting the list's navigation tabs
+     * @param   resultContainer container for inserting the results
+     */
     var SearchResultList = function(tabContainer, resultContainer) {
         // init
         this._tabContainer = tabContainer;
-        this._resultContainer = resultContainer;
+        this._results = resultContainer;
         this._tabContainer.append($('<ul class="eexcess-tabs"><li class="active"><a href="#"><?!= msg('SEARCH_RESULT_LIST_ALL') ?></a></li><li><a href="#"><?!= msg('SEARCH_RESULT_LIST_IMAGES') ?></a></li><li><a href="#"><?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?></a></li><li><a href="#"><?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?></a></li></ul>'));
-        $('.eexcess_tabs li').on('click', function() {
+        this.tab = 'all';
+        var _this = this;
+
+        $('.eexcess-tabs li').on('click', function() {
             if ($(this).hasClass('active')) return; // only refresh if tab changed
 
-            $('.eexcess_tabs li.active').removeClass('active');
+            $('.eexcess-tabs li.active').removeClass('active');
             $(this).addClass('active');
-            switch ($(this).children('a').text()) {
-                case '<?!= msg('SEARCH_RESULT_LIST_IMAGES') ?>':
-                    break;
-                case '<?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?>':
-                    break;
-                case '<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?>':
-                    break;
-                default: // All
-            }
+
+            _this.openTab($(this).children('a').text());
         });
 
-        this._msgContainer = $('<div id="message-container" style="display:none"></div>');
-        this._loader = $('<img id="ajax-loader" style="display:none" src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" alt="<?!= msg('SEARCH_RESULT_LIST_LOADING') ?>" />');
-        this._error = $('<span class="error" style="display:none"></span>');
-        this._info = $('<span style="display:none"></span>');
+        // messages
+        this._messages = $('<div id="messages"></div>');
+        this._loader = $('<img id="ajax-loader" src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" alt="<?!= msg('SEARCH_RESULT_LIST_LOADING') ?>" />');
+        this._error = $('<span id="error-msg" class="error"></span>');
+        this._info = $('<span id="info-msg"></span>');
 
-        this._list = $('<ul id="result-list"></ul>');
+        this._messages.append(this._loader);
+        this._messages.append(this._error);
+        this._messages.append(this._info);
+        this._results.append(this._messages);
 
-        // init
-        this._msgContainer.append(this._loader);
-        this._msgContainer.append(this._error);
-        this._msgContainer.append(this._info);
-        this._resultContainer.append(this._msgContainer);
+        // result list
+        this._resultList = $('<ul></ul>');
+        this._results.append(this._resultList);
 
-        this._resultContainer.append(this._list);
+        // result gallery
+        this._resultGallery = $('<div id="result-gallery"></div>');
+        this._galleryLeft = $('<div id="gallery-left" class="gallery"></div>');
+        this._galleryLeftHeight = 0;
+        this._galleryRight = $('<div id="gallery-right" class="gallery"></div>');
+        this._galleryRightHeight = 0;
+
+        this._resultGallery.append(this._galleryLeft);
+        this._resultGallery.append(this._galleryRight);
+
+        this._results.append(this._resultGallery);
+
+        this._hideAll();
     };
 
+    /**
+     * Displays and opens the current selected tab. If no results can be displayed an info message will be displayed.
+     *
+     * @param tab   new tab to open, if unsepecified the actual activated tab will be opened
+     */
+    SearchResultList.prototype.openTab = function(tab) {
+        if (tab === undefined) {
+            tab = this._tab;
+        }
+
+        var length;
+        this._hideAll();
+
+        $('#results').removeClass();
+        switch (tab) {
+            case '<?!= msg('SEARCH_RESULT_LIST_IMAGES') ?>': // images
+                this._tab = '<?!= msg('SEARCH_RESULT_LIST_IMAGES') ?>';
+                $('#results').addClass('res-type-image');
+                this._resultGallery.show();
+                length = this._galleryLeft.html().length + this._galleryRight.html().length;
+                break;
+            case '<?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?>': // cultural
+                this._tab = '<?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?>';
+            case '<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?>': // scholarly
+                this._tab = '<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?>';
+            default: // all
+                this._tab = 'all';
+                this._resultList.show();
+                length = this._resultList.html().length;
+        }
+
+        if(length===0) {
+            this.showInfo('<?!= msg('SEARCH_RESULT_LIST_EMPTY') ?>');
+        }
+    };
+
+    /**
+     * Diplays the results given as parameter.
+     *
+     * @param data  recommender's response to a search request
+     */
     SearchResultList.prototype.showResults = function(data) {
-        this._empty();
-        this._list.show();
+        this._hideAll();
+        this._resultList.empty();
+        this._emptyGallery();
 
         try{
             data = JSON.parse(data);
@@ -46,87 +104,164 @@
             data = null;
         }
 
-        if (data === null || data.totalResults === 0 || data.totalResults === '0') {
-            this.showInfo('<?!= msg('SEARCH_RESULT_LIST_EMPTY') ?>');
-            return;
+        if (!(data === null || data.totalResults === 0 || data.totalResults === '0')) { // show results
+            var items = data.result;
+            for (var i = 0, len = items.length; i < len; i++) {
+                var item = items[i];
+                var li = $('<li></li>');
+
+                var uri = item.uri;
+                var link = $('<a href="' + uri +  '" target="_blank"></a>');
+                var description = item.description;
+                if (typeof description !== 'undefined' && description !== '') {
+                    $(link).attr('title', this._shortenString(description, 400));
+                }
+                li.append(link);
+
+                var itemContainer = $('<div class="result-item"></div>');
+                link.append(itemContainer);
+
+                var contentDiv = $('<div class="result-content"></div>');
+                itemContainer.append(contentDiv);
+
+                // title
+                var title = item.title;
+                if (typeof title === 'undefined') {
+                    title = '<?!= msg('SEARCH_RESULT_LIST_NO_TITLE') ?>';
+                } else {
+                    title = this._shortenString(title, 140);
+                }
+
+                // image
+                var image = item.previewImage;
+                if (typeof image === 'undefined' || image === '') {
+                    image = "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"; // TODO change image location
+            } else { // add item to image gallery
+                this._addImageToGallery(image, title, uri);
+            }
+                var img = $('<img align="left" class="result-image" src="' + image + '" />');
+
+                contentDiv.append(img);
+                contentDiv.append($('<span class="result-title">' + title + '</span>'));
+
+                // provider
+                var provider = item.facets.provider;
+                if (typeof provider !== 'undefined') {// TODO change image location
+                    itemContainer.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/icons/' + provider + '-favicon.ico" class="partner-icon" />'));
+                }
+
+                this._resultList.append(li);
+            }
+
+            this._results.find('.result-image').error(function() {
+                $(this).unbind("error").attr("https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"); // TODO change image location
+            });
         }
 
-        // show results
-        var items = data.result;
-        for (var i = 0, len = items.length; i < len; i++) {
-            var item = items[i];
-            var li = $('<li></li>');
-
-            var link = $('<a href="' + item.uri +  '" target="_blank"></a>');
-            var description = item.description;
-            if (typeof description !== 'undefined' && description !== '') {
-                $(link).attr('title', description);
-            }
-            li.append(link);
-
-            var itemContainer = $('<div class="result-item"></div>');
-            link.append(itemContainer);
-            var contentDiv = $('<div class="result-content"></div>');
-            itemContainer.append(contentDiv);
-
-            // image
-            var previewImage = item.previewImage;
-            if (typeof previewImage !== 'undefined' || previewImage !== '') {
-                previewImage = "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"; // TODO change image location
-            }
-            var img = $('<img align="left" class="result-image" src="' + previewImage + '" />');
-            contentDiv.append(img);
-
-            // title
-            var title = item.title;
-            if (typeof title === 'undefined') {
-                title = '<?!= msg('SEARCH_RESULT_LIST_NO_TITLE') ?>';
-            }
-            contentDiv.append($('<span class="result-title">' + title + '</span>'));
-
-
-
-            // provider
-            var provider = item.facets.provider;
-            if (typeof provider !== 'undefined') {// TODO change image location
-                itemContainer.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/icons/' + provider + '-favicon.ico" class="partner-icon" />'));
-            }
-
-            this._list.append(li);
-        }
-
-        this._resultContainer.find('.result-image').error(function() {
-            $(this).unbind("error").attr("https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"); // TODO change image location
-        });
+        this.openTab();
     };
 
+    /**
+     * Empties the gallery and resets its height counters to zero.
+     */
+    SearchResultList.prototype._emptyGallery = function() {
+        this._galleryLeft.empty();
+        this._galleryLeftHeight = 0;
+        this._galleryRight.empty();
+        this._galleryRightHeight = 0;
+    };
+
+    /**
+     * Adds an image to the gallery. The image will be placed in the gallery which has currently the smallest height.
+     *
+     * @param   image   image's uri
+     * @param   title   recommendation's title
+     * @param   uri     recommendation's uri
+     */
+    SearchResultList.prototype._addImageToGallery  =  function(image, title, uri) {
+        var link = $('<a title="' + title + '" href="' + uri + '" target="_blank"></a>');
+        var img = document.createElement('img');
+        img.className = 'gallery-img';
+        link.append(img);
+
+        var _this = this;
+        img.onload = function(){
+            if (_this._galleryLeftHeight > _this._galleryRightHeight) {
+                _this._galleryRight.append(link);
+                _this._galleryRightHeight += this.height;
+            }  else {
+                _this._galleryLeft.append(link);
+                _this._galleryLeftHeight += this.height;
+            }
+        };
+
+        img.src = image;
+    };
+
+    /**
+     * Displays the ajax loader and hides all other content in the search result list.
+     */
     SearchResultList.prototype.showAjaxLoader = function() {
-        this._empty();
+        this._hideAll();
         this._loader.show();
-        this._msgContainer.show();
+        this._messages.show();
     };
 
-    SearchResultList.prototype._empty = function() {
-        this._msgContainer.hide();
+    /**
+     * Hides all items including messages (ajax loader, error-msg, info-msg), result list and result gallery.
+     */
+    SearchResultList.prototype._hideAll = function() {
+        this._messages.hide();
         this._loader.hide();
         this._error.hide();
         this._info.hide();
 
-        this._list.hide();
-        this._list.empty();
+        this._resultList.hide();
+        this._resultGallery.hide();
     };
 
+    /**
+     * Displays an error message in the search result list and hides all other items.
+     *
+     * @param errorMsg The error message to display.
+     */
     SearchResultList.prototype.showError = function(errorMsg) {
-        this._empty();
+        this._hideAll();
         this._error.text(errorMsg);
         this._error.show();
-        this._msgContainer.show();
+        this._messages.show();
     };
 
+    /**
+     * Displays an info message in the search result list and hides all other items.
+     *
+     * @param infoMsg The info message to display.
+     */
     SearchResultList.prototype.showInfo = function(infoMsg) {
-        this._empty();
+        this._hideAll();
         this._info.text(infoMsg);
         this._info.show();
-        this._msgContainer.show();
+        this._messages.show();
+    };
+
+    /**
+     * Shortens a given string to the given length plus the remaining characters until the next word.
+     * starts.
+     *
+     * @param string   string to shorten
+     * @param   length  desired length
+     * @returns {string}    shortened string
+     */
+    SearchResultList.prototype._shortenString = function(string, length) {
+        var firstPart = string.substring(0, length);
+        var remainder = string.substring(length, string.length);
+        var endPos = remainder.search(/[.!?; ]/);
+
+        if (endPos != -1) {
+            firstPart += remainder.substring(0, endPos);
+            firstPart += "...";
+        }
+
+        return firstPart;
     };
 </script>

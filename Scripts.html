@@ -8,7 +8,7 @@
     // global variables
     var lastSelectedText;
     var lastSearchedText;
-    var searchResultList = new SearchResultList($('#header'), $('#result-container'));
+    var searchResultList = new SearchResultList($('#header'), $('#results'));
     searchResultList.showInfo('<?!= msg('SEARCH_RESULT_LIST_WELCOME_MSG') ?>');
 
     /**
@@ -44,6 +44,10 @@
         }
     }
 
+    /**
+     * Checks if the current selected text in the document has changed. If it changed automatically a search request
+     * will be submitted to the recommender.
+     */
     function inspectSelectedText() {
         google.script.run
                 .withSuccessHandler(
