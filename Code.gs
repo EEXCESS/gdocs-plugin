@@ -142,12 +142,14 @@ function getTerms(text) {
 function callProxy(terms) {
     // privacy proxy URL
     //var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend";
+    // dev server
+    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/recommend";
     // federated recommender
-    var url = "http://eexcess.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/recommend";
+    //var url = "http://eexcess.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/recommend";
 
     // POST payload
     //var data = {"numResults": 60, "contextKeywords": []};
-    var data = {"numResults": 15, "contextKeywords": []};
+    var data = {"numResults": 5, "contextKeywords": []};
 
      // Fill the context array
     for (i in terms) {

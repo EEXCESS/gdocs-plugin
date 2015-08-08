@@ -108,7 +108,8 @@
     }
 
     /* result list */
-    #results li {
+    #result-list li {
+        display: none;
         overflow: hidden;
         border-bottom: 1px solid #ccc;
         list-style: none;
@@ -117,15 +118,15 @@
         padding: 10px;
     }
 
-    #results li:last-child {
+    #result-list li:last-child {
         border-bottom: none;
     }
 
-    #results li:hover {
+    #result-list li:hover {
         background-color: #eeeeee;
     }
 
-    #results a:hover {
+    #result-list a:hover {
         text-decoration: none;
     }
 
@@ -154,6 +155,15 @@
         position: absolute;
         right: 5px;
         bottom: 0;
+    }
+
+    /* result categories */
+    .res-type-all li, .res-type-cultural li.provider-kimportal, .res-type-cultural li.provider-europeana, .res-type-scholarly li.provider-zbw, .res-type-scholarly li.provider-mendeley {
+        display: list-item !important;
+    }
+
+    .res-type-cultural img.result-image, .res-type-scholarly img.result-image, .res-type-cultural li.type-image, .res-type-scholarly li.type-image {
+        display: none !important;
     }
 
     /* result gallery */

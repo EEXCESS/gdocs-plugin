@@ -3,7 +3,7 @@
      * Initializes the search result list displaying the recommendations.
      *
      * @param tabContainer  container for inserting the list's navigation tabs
-     * @param   resultContainer container for inserting the results
+     * @param   resultContainer container for inserting the results with the id 'results'
      */
     var SearchResultList = function(tabContainer, resultContainer) {
         // init
@@ -34,7 +34,7 @@
         this._results.append(this._messages);
 
         // result list
-        this._resultList = $('<ul></ul>');
+        this._resultList = $('<ul id="result-list"></ul>');
         this._results.append(this._resultList);
 
         // result gallery
@@ -69,21 +69,33 @@
         switch (tab) {
             case '<?!= msg('SEARCH_RESULT_LIST_IMAGES') ?>': // images
                 this._tab = '<?!= msg('SEARCH_RESULT_LIST_IMAGES') ?>';
-                $('#results').addClass('res-type-image');
                 this._resultGallery.show();
-                length = this._galleryLeft.html().length + this._galleryRight.html().length;
+                length= $(this._galleryLeft).find("a").length +$(this._galleryRight).find("a").length;
                 break;
             case '<?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?>': // cultural
                 this._tab = '<?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?>';
+                this._resultList.show();
+                $(this._resultList).attr('class', 'res-type-cultural');
+                length=  $('#result-list').find('li').filter(function() {
+                    return $(this).css('display') === 'list-item';
+                }).length;
+                break;
             case '<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?>': // scholarly
                 this._tab = '<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?>';
+                this._resultList.show();
+                $(this._resultList).attr('class', 'res-type-scholarly');
+                length=  $('#result-list').find('li').filter(function() {
+                    return $(this).css('display') === 'list-item';
+                }).length;
+                break;
             default: // all
                 this._tab = 'all';
                 this._resultList.show();
-                length = this._resultList.html().length;
+                $(this._resultList).attr('class', 'res-type-all');
+                length=  $('#result-list').find('li').length;
         }
 
-        if(length===0) {
+        if(length === 0) {
             this.showInfo('<?!= msg('SEARCH_RESULT_LIST_EMPTY') ?>');
         }
     };
@@ -110,11 +122,11 @@
                 var item = items[i];
                 var li = $('<li></li>');
 
-                var uri = item.uri;
+                var uri = item.documentBadge.uri;
                 var link = $('<a href="' + uri +  '" target="_blank"></a>');
                 var description = item.description;
                 if (typeof description !== 'undefined' && description !== '') {
-                    $(link).attr('title', this._shortenString(description, 400));
+                    $(link).attr('title', shortenString(description, 400));
                 }
                 li.append(link);
 
@@ -129,32 +141,45 @@
                 if (typeof title === 'undefined') {
                     title = '<?!= msg('SEARCH_RESULT_LIST_NO_TITLE') ?>';
                 } else {
-                    title = this._shortenString(title, 140);
+                    title = shortenString(title, 140);
                 }
 
                 // image
+                var img = $('<img align="left" class="result-image" />');
                 var image = item.previewImage;
                 if (typeof image === 'undefined' || image === '') {
                     image = "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"; // TODO change image location
-            } else { // add item to image gallery
-                this._addImageToGallery(image, title, uri);
-            }
-                var img = $('<img align="left" class="result-image" src="' + image + '" />');
+                } else { // add item to image gallery
+                    this._addImageToGallery(image, title, uri);
+                }
+                $(img).attr('src', image);
 
                 contentDiv.append(img);
                 contentDiv.append($('<span class="result-title">' + title + '</span>'));
 
                 // provider
-                var provider = item.facets.provider;
-                if (typeof provider !== 'undefined') {// TODO change image location
-                    itemContainer.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/icons/' + provider + '-favicon.ico" class="partner-icon" />'));
+                var provider = item.documentBadge.provider;
+                if (typeof provider !== 'undefined') {
+                    var providerName = formatString(provider);
+                    itemContainer.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/icons/' + providerName + '-favicon.ico" class="partner-icon" />')); // TODO chaange image location
+                    $(li).addClass('provider-' + providerName);
+                }
+
+                // media type
+                var mediatype = item.mediaType;
+                if (typeof mediatype !== 'undefined') {
+                    $(li).addClass('type-' + formatString(mediatype));
                 }
 
                 this._resultList.append(li);
             }
 
             this._results.find('.result-image').error(function() {
-                $(this).unbind("error").attr("https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"); // TODO change image location
+                $(this).unbind("error").attr("src", "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"); // TODO change image location
+            });
+
+            this._results.find('.partner-icon').error(function() {
+                $(this).unbind("error").attr("src", "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/icons/help.png"); // TODO change image location
             });
         }
 
@@ -252,7 +277,7 @@
      * @param   length  desired length
      * @returns {string}    shortened string
      */
-    SearchResultList.prototype._shortenString = function(string, length) {
+    function shortenString(string, length) {
         var firstPart = string.substring(0, length);
         var remainder = string.substring(length, string.length);
         var endPos = remainder.search(/[.!?; ]/);
@@ -263,5 +288,15 @@
         }
 
         return firstPart;
-    };
+    }
+
+    /**
+     * Formats a string to lowercase and replaces space with '-'.
+     *
+     * @param string
+     * @returns {string}
+     */
+    function formatString(string) {
+        return string.replace(/\s+/g, '-').toLowerCase();
+    }
 </script>
