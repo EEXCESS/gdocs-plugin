@@ -144,11 +144,18 @@
                     title = shortenString(title, 140);
                 }
 
+                // media type
+                var mediatype = item.mediaType;
+                if (typeof mediatype === 'undefined' || mediatype === '') {
+                    mediatype = 'unknown';
+                }
+
                 // image
                 var img = $('<img align="left" class="result-image" />');
+                $(img).attr('mediaType', mediatype);
                 var image = item.previewImage;
                 if (typeof image === 'undefined' || image === '') {
-                    image = "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"; // TODO change image location
+                    image = "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
                 } else { // add item to image gallery
                     this._addImageToGallery(image, title, uri);
                 }
@@ -165,21 +172,18 @@
                     $(li).addClass('provider-' + providerName);
                 }
 
-                // media type
-                var mediatype = item.mediaType;
-                if (typeof mediatype !== 'undefined') {
-                    $(li).addClass('type-' + formatString(mediatype));
-                }
-
                 this._resultList.append(li);
             }
 
             this._results.find('.result-image').error(function() {
-                $(this).unbind("error").attr("src", "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/no-img.png"); // TODO change image location
+                $(this).unbind("error");
+                var mediaType = $(this).attr("mediaType");
+                $(this).attr("src", "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
             });
 
             this._results.find('.partner-icon').error(function() {
-                $(this).unbind("error").attr("src", "https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/icons/help.png"); // TODO change image location
+                $(this).unbind("error");
+                $(this).hide();
             });
         }
 
