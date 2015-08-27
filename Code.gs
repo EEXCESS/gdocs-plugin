@@ -69,14 +69,16 @@ function getSelectedText() {
         var elements = selection.getRangeElements();
 
         for (var i = 0; i < elements.length; i++) {
+            var element;
+
             if (elements[i].isPartial()) {
-                var element = elements[i].getElement().asText();
+                element = elements[i].getElement().asText();
                 var startIndex = elements[i].getStartOffset();
                 var endIndex = elements[i].getEndOffsetInclusive();
 
                 text.push(element.getText().substring(startIndex, endIndex + 1));
             } else {
-                var element = elements[i].getElement();
+                element = elements[i].getElement();
                 // Only translate elements that can be edited as text; skip images and
                 // other non-text elements.
                 if (element.editAsText) {
@@ -183,6 +185,13 @@ function callProxy(terms) {
     }
 }
 
+/**
+ * Returns the internationalized message corresponding to the given key. Default language English will be chosen if
+ * user's locale is not supported.
+ *
+ * @param key   message's key
+ * @returns {String} internationalized message
+ */
 function msg(key) {
     if (!this.messages){
         var locale = Session.getActiveUserLocale();
@@ -202,6 +211,9 @@ function msg(key) {
 
 var serverUri = "http://eexcess-dev.joanneum.at/";
 
+/**
+ * Opens and displays the settings dialog.
+ */
 function openSettingsDialog() {
     var html = HtmlService.createTemplateFromFile('SettingsDialog').evaluate()
         .setSandboxMode(HtmlService.SandboxMode.IFRAME)
@@ -211,6 +223,11 @@ function openSettingsDialog() {
         .showModalDialog(html, msg('SETTINGS'));
 }
 
+/**
+ * Fetches the supported providers from the privacy proxy.
+ *
+ * @returns {*} supported providers
+ */
 function fetchProviders() {
     // privacy proxy URL
     var url = serverUri +  "eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/getRegisteredPartners";
@@ -235,14 +252,27 @@ function getProperty(key) {
     return propertiesStore.getProperty(key);
 }
 
+/**
+ * Returns the result number set by the user or if not specified the default result number 24.
+ *
+ * @returns {String}    result number
+ */
 function getResultNumber() {
     var resultNumber = getProperty('EEXXCESS_NUM_RESULTS');
+
     if (resultNumber===null) {
-        resultNumber = 60;
+        resultNumber = 24;
     }
+
     return resultNumber;
 }
 
+/**
+ * Stores the result number and the partner settings.
+ *
+ * @param resultNumber
+ * @param partnerSettings
+ */
 function saveSettings(resultNumber, partnerSettings) {
     setProperty('EEXXCESS_NUM_RESULTS', resultNumber);
     setProperty('EEXXCESS_STORED_PARTNERS', partnerSettings);
@@ -258,6 +288,9 @@ function setProperty(key, value) {
     propertiesStore.setProperty(key, value);
 }
 
+/**
+ * Returns the partner settings.
+ */
 function getPartnerSettings() {
     // get all available partners
     var allPartners = fetchProviders();
@@ -265,7 +298,7 @@ function getPartnerSettings() {
     try{
         allPartners = JSON.parse(allPartners);
         allPartners = allPartners.partner;
-    }catch(e){
+    } catch (e) {
         allPartners = [];
     }
 
@@ -274,12 +307,13 @@ function getPartnerSettings() {
 
     try{
         storedPartners = JSON.parse(storedPartners);
-    }catch(e){
+    } catch (e) {
         storedPartners = [];
     }
 
     var partnerSettings = [];
-    for (var i=0;i<allPartners.length;i++) {
+
+    for (var i = 0; i < allPartners.length; i++) {
         var partnerName = allPartners[i].systemId;
         var storeIdx = inArray(partnerName, storedPartners, 'name');
 
@@ -293,6 +327,15 @@ function getPartnerSettings() {
     return JSON.stringify(partnerSettings);
 }
 
+/**
+ * Checks if the given element is contained the given array. If the array is 2-dimensional the element's key in the
+ * array is also required.
+ *
+ * @param elem  element to search
+ * @param arr   array to search through
+ * @param arrKey    element's key in the 2-dimensional array
+ * @returns {number}    element's position in the array or -1 if array doesn't contain the element
+ */
 function inArray( elem, arr, arrKey) {
     if (arr !== null) {
         for (var i = 0; i < arr.length; i++) {
