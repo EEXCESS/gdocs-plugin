@@ -9,22 +9,19 @@
         // init
         this._tabContainer = tabContainer;
         this._results = resultContainer;
-        this._tabContainer.append($('<ul class="eexcess-tabs"><li class="active"><a href="#"><?!= msg('SEARCH_RESULT_LIST_ALL') ?></a></li><li><a href="#"><?!= msg('SEARCH_RESULT_LIST_IMAGES') ?></a></li><li><a href="#"><?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?></a></li><li><a href="#"><?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?></a></li></ul>'));
-        this.tab = 'all';
+        this._tabContainer.append($('<ul class="eexcess-tabs"><li id="all-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_ALL') ?></a></li><li id="image-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_IMAGES') ?></a></li><li id="cultural-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?></a></li><li id="scholarly-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?></a></li></ul>'));
         var _this = this;
 
         $('.eexcess-tabs li').on('click', function() {
             if ($(this).hasClass('active')) return; // only refresh if tab changed
 
-            $('.eexcess-tabs li.active').removeClass('active');
-            $(this).addClass('active');
-
-            _this.openTab($(this).children('a').text());
+            var id = $(this).attr('id');
+            _this.openTab(id);
         });
 
         // messages
         this._messages = $('<div id="messages"></div>');
-        this._loader = $('<img id="ajax-loader" src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" alt="<?!= msg('SEARCH_RESULT_LIST_LOADING') ?>" />');
+        this._loader = $('<img id="ajax-loader" src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />');
         this._error = $('<span id="error-msg" class="error"></span>');
         this._info = $('<span id="info-msg"></span>');
 
@@ -50,6 +47,24 @@
         this._results.append(this._resultGallery);
 
         this._hideAll();
+        this.restoreTab(true);
+    };
+
+    /**
+     * Loads and opens the last selected or default tab if no tab was stored yet.
+     *
+     * @param {Boolean} welcomeMsg if this flag is true a welcome message will be displayed, otherwise not
+     */
+    SearchResultList.prototype.restoreTab = function(welcomeMsg) {
+        // load last opened tab
+        var _this = this;
+            google.script.run.withSuccessHandler(function (tab) {
+                _this.openTab(tab);
+
+                if (welcomeMsg) {
+                    _this.showInfo('<?!= msg('SEARCH_RESULT_LIST_WELCOME_MSG') ?>');
+                }
+            }).getProperty('EEXCESS_TAB');
     };
 
     /**
@@ -58,38 +73,39 @@
      * @param tab   new tab to open, if unsepecified the actual activated tab will be opened
      */
     SearchResultList.prototype.openTab = function(tab) {
-        if (tab === undefined) {
-            tab = this._tab;
-        }
+        // store new opened tab
+        google.script.run.setProperty('EEXCESS_TAB', tab);
+
+        $('.eexcess-tabs li.active').removeClass('active');
 
         var length;
         this._hideAll();
 
         $('#results').removeClass();
         switch (tab) {
-            case '<?!= msg('SEARCH_RESULT_LIST_IMAGES') ?>': // images
-                this._tab = '<?!= msg('SEARCH_RESULT_LIST_IMAGES') ?>';
+            case 'image-tab':
+                $('#image-tab').addClass('active');
                 this._resultGallery.show();
                 length= $(this._galleryLeft).find("a").length +$(this._galleryRight).find("a").length;
                 break;
-            case '<?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?>': // cultural
-                this._tab = '<?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?>';
+            case 'cultural-tab':
+                $('#cultural-tab').addClass('active');
                 this._resultList.show();
                 $(this._resultList).attr('class', 'res-type-cultural');
                 length=  $('#result-list').find('li').filter(function() {
                     return $(this).css('display') === 'list-item';
                 }).length;
                 break;
-            case '<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?>': // scholarly
-                this._tab = '<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?>';
+            case 'scholarly-tab':
+                $('#scholarly-tab').addClass('active');
                 this._resultList.show();
                 $(this._resultList).attr('class', 'res-type-scholarly');
                 length=  $('#result-list').find('li').filter(function() {
                     return $(this).css('display') === 'list-item';
                 }).length;
                 break;
-            default: // all
-                this._tab = 'all';
+            default: // all-tab
+                $('#all-tab').addClass('active');
                 this._resultList.show();
                 $(this._resultList).attr('class', 'res-type-all');
                 length=  $('#result-list').find('li').length;
@@ -145,17 +161,18 @@
                 }
 
                 // media type
-                var mediatype = item.mediaType;
-                if (typeof mediatype === 'undefined' || mediatype === '') {
-                    mediatype = 'unknown';
+                var mediaType = item.mediaType;
+                if (typeof mediaType === 'undefined' || mediaType === '') {
+                    mediaType = 'unknown';
                 }
+                mediaType = mediaType.toLowerCase();
 
                 // image
                 var img = $('<img align="left" class="result-image" />');
-                $(img).attr('mediaType', mediatype);
+                $(img).attr('mediaType', mediaType);
                 var image = item.previewImage;
                 if (typeof image === 'undefined' || image === '') {
-                    image = "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
+                    image = "<?!= serverUri ?>eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
                 } else { // add item to image gallery
                     this._addImageToGallery(image, title, uri);
                 }
@@ -178,7 +195,7 @@
             this._results.find('.result-image').error(function() {
                 $(this).unbind("error");
                 var mediaType = $(this).attr("mediaType");
-                $(this).attr("src", "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
+                $(this).attr("src", "<?!= serverUri ?>eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
             });
 
             this._results.find('.partner-icon').error(function() {
@@ -187,7 +204,7 @@
             });
         }
 
-        this.openTab();
+        this.restoreTab();
     };
 
     /**

@@ -8,8 +8,7 @@
     // global variables
     var lastSelectedText;
     var lastSearchedText;
-    var searchResultList = new SearchResultList($('#header'), $('#results'));
-    searchResultList.showInfo('<?!= msg('SEARCH_RESULT_LIST_WELCOME_MSG') ?>');
+    var searchResultList;
 
     /**
      * On document load.
@@ -25,10 +24,16 @@
         $('#btn-search').click(getRecommendationsFromInput);
 
         // init search results list
+        searchResultList = new SearchResultList($('#tabContainer'), $('#results'));
 
+        $('#settings-button').click(openSettings);
 
         inspectSelectedText();
     });
+
+    function openSettings() {
+        google.script.run.openSettingsDialog();
+    }
 
     /**
      * Runs a server-side function to get the recommendations for the user-entered text and update

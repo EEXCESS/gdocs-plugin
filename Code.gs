@@ -91,12 +91,12 @@ function getSelectedText() {
         }
 
         if (text.length == 0) {
-            throw 'Please select some text.';
+            throw 'Select some text.';
         }
 
         return text;
     } else {
-        throw 'Please select some text.';
+        throw 'Select some text.';
     }
 }
 
@@ -141,15 +141,24 @@ function getTerms(text) {
  */
 function callProxy(terms) {
     // privacy proxy URL
-    //var url = "http://eexcess.joanneum.at/eexcess-privacy-proxy/api/v1/recommend";
-    // dev server
-    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/recommend";
-    // federated recommender
-    //var url = "http://eexcess.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/recommend";
+    var url = serverUri +  "eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/recommend";
+
+    // get result number
+    var numResults = getResultNumber();
 
     // POST payload
-    //var data = {"numResults": 60, "contextKeywords": []};
-    var data = {"numResults": 5, "contextKeywords": []};
+    var data = {"numResults": numResults, "partnerList": [], "contextKeywords": []};
+
+    // set partners
+    var partners = getPartnerSettings();
+    partners = JSON.parse(partners);
+
+    for(var i=0;i<partners.length;i++) {
+        var partner = partners[i];
+        if (partner.active) {
+            data["partnerList"].push({"systemId": partner.name});
+        }
+    }
 
      // Fill the context array
     for (i in terms) {
@@ -189,4 +198,110 @@ function msg(key) {
     }
 
     return this.messages[key];
+}
+
+var serverUri = "http://eexcess-dev.joanneum.at/";
+
+function openSettingsDialog() {
+    var html = HtmlService.createTemplateFromFile('SettingsDialog').evaluate()
+        .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+        .setWidth(380)
+        .setHeight(300);
+    DocumentApp.getUi() // Or DocumentApp or FormApp.
+        .showModalDialog(html, msg('SETTINGS'));
+}
+
+function fetchProviders() {
+    // privacy proxy URL
+    var url = serverUri +  "eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/getRegisteredPartners";
+
+    try {
+        var response = UrlFetchApp.fetch(url);
+        return response.getContentText();
+    } catch (err) {
+        throw msg('ERROR');
+    }
+}
+
+var propertiesStore = PropertiesService.getUserProperties();
+
+/**
+ * Gets the value associated with the given key in the current Properties store, or null if no such key exists.
+ *
+ * @param {String} key   property's key
+ * @returns {String}    property's value or null
+ */
+function getProperty(key) {
+    return propertiesStore.getProperty(key);
+}
+
+function getResultNumber() {
+    var resultNumber = getProperty('EEXXCESS_NUM_RESULTS');
+    if (resultNumber===null) {
+        resultNumber = 60;
+    }
+    return resultNumber;
+}
+
+function saveSettings(resultNumber, partnerSettings) {
+    setProperty('EEXXCESS_NUM_RESULTS', resultNumber);
+    setProperty('EEXXCESS_STORED_PARTNERS', partnerSettings);
+}
+
+/**
+ * Sets the given key-value pair in the current Properties store.
+ *
+ * @param {String} key  property's key
+ * @param {String} value    property's value
+ */
+function setProperty(key, value) {
+    propertiesStore.setProperty(key, value);
+}
+
+function getPartnerSettings() {
+    // get all available partners
+    var allPartners = fetchProviders();
+
+    try{
+        allPartners = JSON.parse(allPartners);
+        allPartners = allPartners.partner;
+    }catch(e){
+        allPartners = [];
+    }
+
+    // get stored partners
+    var storedPartners = getProperty('EEXXCESS_STORED_PARTNERS');
+
+    try{
+        storedPartners = JSON.parse(storedPartners);
+    }catch(e){
+        storedPartners = [];
+    }
+
+    var partnerSettings = [];
+    for (var i=0;i<allPartners.length;i++) {
+        var partnerName = allPartners[i].systemId;
+        var storeIdx = inArray(partnerName, storedPartners, 'name');
+
+        if (storeIdx === -1) { // new partner -> make active
+            partnerSettings.push({"name": partnerName, "active": true});
+        } else { // use stored value
+            partnerSettings.push(storedPartners[storeIdx]);
+        }
+    }
+
+    return JSON.stringify(partnerSettings);
+}
+
+function inArray( elem, arr, arrKey) {
+    if (arr !== null) {
+        for (var i = 0; i < arr.length; i++) {
+            var arrayElem = arr[i];
+
+            if ((arrKey && elem === arrayElem[arrKey]) || elem === arrayElem)
+                return i;
+        }
+    }
+
+    return -1;
 }
