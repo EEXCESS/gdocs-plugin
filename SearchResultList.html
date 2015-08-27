@@ -21,7 +21,7 @@
 
         // messages
         this._messages = $('<div id="messages"></div>');
-        this._loader = $('<img id="ajax-loader" src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />');
+        this._loader = $('<img id="ajax-loader" src="http://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />');
         this._error = $('<span id="error-msg" class="error"></span>');
         this._info = $('<span id="info-msg"></span>');
 
@@ -185,7 +185,7 @@
                 var provider = item.documentBadge.provider;
                 if (typeof provider !== 'undefined') {
                     var providerName = formatString(provider);
-                    itemContainer.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="https://raw.githubusercontent.com/EEXCESS/visualization-widgets/master/SearchResultList/media/icons/' + providerName + '-favicon.ico" class="partner-icon" />')); // TODO chaange image location
+                    itemContainer.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPartnerFavIcon?partnerId=' + provider + '" class="partner-icon" />'));
                     $(li).addClass('provider-' + providerName);
                 }
 
