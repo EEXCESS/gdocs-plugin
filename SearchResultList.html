@@ -132,57 +132,69 @@
             var items = data.result;
             for (var i = 0, len = items.length; i < len; i++) {
                 var item = items[i];
+
                 var li = $('<li></li>');
 
-                var uri = item.documentBadge.uri;
-                var link = $('<a href="' + uri +  '" target="_blank"></a>');
+                // description
                 var description = item.description;
-                if (typeof description !== 'undefined' && description !== '') {
-                    $(link).attr('title', shortenString(description, 400));
+                if (typeof description === 'undefined' || description === '') {
+                    description = '<?!= msg('SEARCH_RESULT_LIST_NO_DESCRIPTION') ?>';
+                } else {
+                    description = '<?!= msg('SEARCH_RESULT_LIST_DESCRIPTION') ?>:\n' + shortenString(description, 400);
                 }
+
+                // link
+                var uri = item.documentBadge.uri;
+                var link = $('<a href="' + uri +  '" target="_blank" title="' + description + '"></a>');
                 li.append(link);
 
-                var itemContainer = $('<div class="result-item"></div>');
-                link.append(itemContainer);
-
+                // item containers
                 var contentDiv = $('<div class="result-content"></div>');
-                itemContainer.append(contentDiv);
+                var footerDiv = $('<div class="result-footer"></div>');
+                link.append(contentDiv);
+                link.append(footerDiv);
 
                 // title
                 var title = item.title;
                 if (typeof title === 'undefined') {
                     title = '<?!= msg('SEARCH_RESULT_LIST_NO_TITLE') ?>';
                 } else {
-                    title = shortenString(title, 140);
+                    title = this._formatTitle(title);
                 }
+                contentDiv.append($('<span class="result-title">' + title + '</span>'));
 
-                // media type
+                // type
                 var mediaType = item.mediaType;
                 if (typeof mediaType === 'undefined' || mediaType === '') {
                     mediaType = 'unknown';
                 }
-                mediaType = mediaType.toLowerCase();
+                mediaType = mediaType.toLowerCase(); // TODO rm lowercase if issue fixed: https://github.com/EEXCESS/recommender/issues/16
+                var type = $('<span class="result-type secondary"><?!= msg('SEARCH_RESULT_LIST_MEDIATYPE') ?>: ' + this._getMediaTypeName(mediaType) + '</span>');
+                footerDiv.append(type);
 
                 // image
-                var img = $('<img align="left" class="result-image" />');
-                $(img).attr('mediaType', mediaType);
                 var image = item.previewImage;
                 if (typeof image === 'undefined' || image === '') {
                     image = "<?!= serverUri ?>eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
                 } else { // add item to image gallery
                     this._addImageToGallery(image, title, uri);
                 }
-                $(img).attr('src', image);
+                var img = $('<img align="left" class="result-image" mediatype="' + mediaType + '" src="' + image + '"/>');
+                contentDiv.prepend(img);
 
-                contentDiv.append(img);
-                contentDiv.append($('<span class="result-title">' + title + '</span>'));
+                // date
+                var date = item.date;
+                if (date !== 'undefined' && date !== '' && date !== 'unknown') {
+                    var dateLabel = $('<span class="result-date secondary">' + this._formatDate(date) + '</span>');
+                    footerDiv.append(dateLabel);
+                }
 
                 // provider
                 var provider = item.documentBadge.provider;
                 if (typeof provider !== 'undefined') {
-                    var providerName = formatString(provider);
-                    itemContainer.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPartnerFavIcon?partnerId=' + provider + '" class="partner-icon" />'));
-                    $(li).addClass('provider-' + providerName);
+                    var providerFormatted = formatString(provider);
+                    footerDiv.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPartnerFavIcon?partnerId=' + provider + '" class="partner-icon" />'));
+                    $(li).addClass('provider-' + providerFormatted);
                 }
 
                 this._resultList.append(li);
@@ -204,6 +216,52 @@
     };
 
     /**
+     * Shortens the title to 140 characters and converts uppercase titles to lowercase with first character in
+     * uppercase.
+     *
+     * @param title
+     */
+    SearchResultList.prototype._formatTitle = function(title) {
+        title = shortenString(title, 140);
+        var uppercaseTitle = title.toUpperCase();
+
+        if (title === uppercaseTitle) {
+            title = title.substring(0,1) + title.toLowerCase().substring(1);
+        }
+
+        return title;
+    };
+
+    SearchResultList.prototype._formatDate = function(date) {
+        var maxDateLength = 7;
+
+        if (date.length > maxDateLength) {
+            date = date.substring(0, maxDateLength) + '...';
+        }
+
+        return date;
+    };
+
+    SearchResultList.prototype._getMediaTypeName = function(mediaType) {
+        switch (mediaType) {
+            case 'text':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_TEXT') ?>';
+            case 'audio':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_AUDIO') ?>';
+            case '3d':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_3D') ?>';
+            case 'image':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_IMAGE') ?>';
+            case 'video':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_VIDEO') ?>';
+            case 'other':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_OTHER') ?>';
+            default: // unknown
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_UNKNOWN') ?>';
+        }
+    };
+
+    /**
      * Empties the gallery and resets its height counters to zero.
      */
     SearchResultList.prototype._emptyGallery = function() {
@@ -221,7 +279,7 @@
      * @param   uri     recommendation's uri
      */
     SearchResultList.prototype._addImageToGallery  =  function(image, title, uri) {
-        var link = $('<a title="' + title + '" href="' + uri + '" target="_blank"></a>');
+        var link = $('<a title="<?!= msg('SEARCH_RESULT_LIST_TITLE') ?>:\n' + title + '" href="' + uri + '" target="_blank"></a>');
         var img = document.createElement('img');
         img.className = 'gallery-img';
         link.append(img);
