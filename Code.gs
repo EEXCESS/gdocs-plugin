@@ -217,7 +217,7 @@ var serverUri = "http://eexcess-dev.joanneum.at/";
 function openSettingsDialog() {
     var html = HtmlService.createTemplateFromFile('SettingsDialog').evaluate()
         .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-        .setWidth(380)
+        .setWidth(300)
         .setHeight(300);
     DocumentApp.getUi() // Or DocumentApp or FormApp.
         .showModalDialog(html, msg('SETTINGS'));

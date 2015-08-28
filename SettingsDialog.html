@@ -6,27 +6,62 @@
         font-size: 1.1em;
         margin-bottom: 10px;
     }
-    .settings-control {
-        margin-bottom: 20px;
-    }
+
     #input-result-number {
         margin-right: 5px;
         width: 60px;
     }
+
+    .provider-settings {
+        position: absolute;
+        top: 83px;
+        right: 8px;
+        left: 8px;
+        width: auto;
+    }
+
+    #ajax-loader {
+        width: 16px;
+        height: 16px;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        padding: 10px;
+    }
+
+    #providers {
+        position: absolute;
+        top: 111px;
+        bottom: 67px;
+        overflow-y: auto;
+        left: 8px;
+        right: 8px;
+        overflow-x: hidden;
+    }
+
+    .settings-buttons {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        height: 29px;
+        right: 8px;
+    }
 </style>
 
 <div class="modal-dialog-content script-prompt-contents">
-    <div class="settings-label"><?!= msg('SETTINGS_PROVIDERS') ?>:</div>
-    <div id="providers" class="settings-control">
-        <img id="ajax-loader" src="http://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />
-    </div>
     <div class="settings-label"><?!= msg('SETTINGS_RESULT_NUM') ?>:</div>
-    <div class="settings-control">
+    <div>
         <input id="input-result-number" type="number" min="1" placeholder="60">
         <span id="result-number-error" class="error" style="display: none"></span>
     </div>
+
+    <div class="settings-label provider-settings"><?!= msg('SETTINGS_PROVIDERS') ?>:</div>
+    <div id="providers">
+        <img id="ajax-loader" src="http://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />
+    </div>
 </div>
-<div class="modal-dialog-buttons">
+
+<div class="modal-dialog-buttons settings-buttons">
     <button id="save-button" class="action"><?!= msg('SETTINGS_SAVE') ?></button>
     <button onclick="google.script.host.close()"><?!= msg('SETTINGS_CANCEL') ?></button>
 </div>
