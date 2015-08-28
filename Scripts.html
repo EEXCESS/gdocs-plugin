@@ -24,7 +24,7 @@
         $('#btn-search').click(getRecommendationsFromInput);
 
         // init search results list
-        searchResultList = new SearchResultList($('#tabContainer'), $('#results'));
+        searchResultList = new SearchResultList();
 
         $('#settings-button').click(openSettings);
 
@@ -56,17 +56,17 @@
     function inspectSelectedText() {
         google.script.run
                 .withSuccessHandler(
-                    function(selectedText) {
-                        if (selectedText.length > 0 && !arraysEqual(selectedText, lastSelectedText)) {
-                            lastSelectedText = selectedText;
-                            $("#eexcess-search").val(selectedText);
-                            $('#btn-search').click();
-                        }
-                    })
+                function(selectedText) {
+                    if (selectedText.length > 0 && !arraysEqual(selectedText, lastSelectedText)) {
+                        lastSelectedText = selectedText;
+                        $("#eexcess-search").val(selectedText);
+                        $('#btn-search').click();
+                    }
+                })
                 .withFailureHandler(
-                    function() {
-                        // ignore errors
-                    })
+                function() {
+                    // ignore errors
+                })
                 .getSelectedText();
 
         window.setTimeout(inspectSelectedText, REFRESH_INTERVAL);

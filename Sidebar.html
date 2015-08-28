@@ -6,7 +6,20 @@
         <button class="action" id="btn-search"><?!= msg('SEARCHBAR_SEARCH') ?></button>
     </div>
     <div class="tab-container">
-        <div id="tabContainer"></div>
+        <ul class="eexcess-tabs">
+            <li id="all-tab">
+                <a><?!= msg('SEARCH_RESULT_LIST_ALL') ?></a>
+            </li>
+            <li id="image-tab">
+                <a><?!= msg('SEARCH_RESULT_LIST_IMAGES') ?></a>
+            </li>
+            <li id="cultural-tab">
+                <a><?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?></a>
+            </li>
+            <li id="scholarly-tab">
+                <a><?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?></a>
+            </li>
+        </ul>
         <div id="settings-button">
             <img title="<?!= msg('SETTINGS') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/settings.png">
         </div>

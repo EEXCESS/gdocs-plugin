@@ -1,15 +1,11 @@
 <script type="text/javascript">
     /**
-     * Initializes the search result list displaying the recommendations.
-     *
-     * @param tabContainer  container for inserting the list's navigation tabs
-     * @param   resultContainer container for inserting the results with the id 'results'
+     * Initializes the search result list displaying the recommendations. Tabs have to be contained in a list with the
+     * style class 'eexcess-tabs' and the results will be inserted into a div-container with the id 'results'.
      */
-    var SearchResultList = function(tabContainer, resultContainer) {
+    var SearchResultList = function() {
         // init
-        this._tabContainer = tabContainer;
-        this._results = resultContainer;
-        this._tabContainer.append($('<ul class="eexcess-tabs"><li id="all-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_ALL') ?></a></li><li id="image-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_IMAGES') ?></a></li><li id="cultural-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?></a></li><li id="scholarly-tab"><a href="#"><?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?></a></li></ul>'));
+        this._results = $('#results');
         var _this = this;
 
         $('.eexcess-tabs li').on('click', function() {
@@ -58,13 +54,13 @@
     SearchResultList.prototype.restoreTab = function(welcomeMsg) {
         // load last opened tab
         var _this = this;
-            google.script.run.withSuccessHandler(function (tab) {
-                _this.openTab(tab);
+        google.script.run.withSuccessHandler(function (tab) {
+            _this.openTab(tab);
 
-                if (welcomeMsg) {
-                    _this.showInfo('<?!= msg('SEARCH_RESULT_LIST_WELCOME_MSG') ?>');
-                }
-            }).getProperty('EEXCESS_TAB');
+            if (welcomeMsg) {
+                _this.showInfo('<?!= msg('SEARCH_RESULT_LIST_WELCOME_MSG') ?>');
+            }
+        }).getProperty('EEXCESS_TAB');
     };
 
     /**
