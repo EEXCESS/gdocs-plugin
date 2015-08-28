@@ -175,7 +175,7 @@
                 // image
                 var image = item.previewImage;
                 if (typeof image === 'undefined' || image === '') {
-                    image = "<?!= serverUri ?>eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
+                    image = "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
                 } else { // add item to image gallery
                     this._addImageToGallery(image, title, uri);
                 }
@@ -203,7 +203,7 @@
             this._results.find('.result-image').error(function() {
                 $(this).unbind("error");
                 var mediaType = $(this).attr("mediaType");
-                $(this).attr("src", "<?!= serverUri ?>eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
+                $(this).attr("src", "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
             });
 
             this._results.find('.partner-icon').error(function() {

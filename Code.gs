@@ -1,4 +1,4 @@
-/*  Copyright 2014 University of Passau
+/*  Copyright 2015 University of Passau
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -143,7 +143,7 @@ function getTerms(text) {
  */
 function callProxy(terms) {
     // privacy proxy URL
-    var url = serverUri +  "eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/recommend";
+    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/recommend";
 
     // get result number
     var numResults = getResultNumber();
@@ -209,8 +209,6 @@ function msg(key) {
     return this.messages[key];
 }
 
-var serverUri = "http://eexcess-dev.joanneum.at/";
-
 /**
  * Opens and displays the settings dialog.
  */
@@ -230,7 +228,7 @@ function openSettingsDialog() {
  */
 function fetchProviders() {
     // privacy proxy URL
-    var url = serverUri +  "eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/getRegisteredPartners";
+    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/getRegisteredPartners";
 
     try {
         var response = UrlFetchApp.fetch(url);
