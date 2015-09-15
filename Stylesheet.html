@@ -16,22 +16,24 @@
         z-index: 1030;
         width: auto;
     }
-    .inline-form {
+
+    #search-container {
         width:100%;
+        overflow: auto;
     }
-    .inline-form input {
-        width: 204px;
+    #eexcess-search {
+        width: 195px;
         height: 29px;
         float: left;
     }
-    .inline-form button {
+    #btn-search {
+        float: right;
         width: 72px;
         height: 29px;
     }
 
     /* settings */
     .tab-container {
-        position: relative;
         height: 37px;
     }
 
@@ -44,8 +46,8 @@
         border-radius: 2px;
 
         position: absolute;
-        right: 0;
-        top: 5px;
+        right: 12px;
+        top: 46px;
         width: 25px;
         height: 25px;
     }
@@ -74,6 +76,7 @@
         padding:0;
         display: block;
         border-bottom: 1px solid #ddd;
+        width: 100%;
     }
 
     .eexcess-tabs:before {
