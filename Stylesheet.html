@@ -39,36 +39,39 @@
         height: 37px;
     }
 
-    #settings-button {
+    .image-button {
         background: -webkit-linear-gradient(top, #f5f5f5, #f1f1f1);
         background: linear-gradient(top, #f5f5f5, #f1f1f1);
         border: 1px solid #dcdcdc;
         -moz-border-radius: 2px;
         -webkit-border-radius: 2px;
         border-radius: 2px;
-
-        position: absolute;
-        right: 12px;
-        top: 46px;
         width: 25px;
         height: 25px;
     }
 
-    #settings-button:hover {
+    .image-button:hover {
         background: -webkit-linear-gradient(top, #f8f8f8, #f1f1f1);
         background: linear-gradient(top, #f8f8f8, #f1f1f1);
         border: 1px solid #c6c6c6;
+        cursor: pointer;
     }
 
-    #settings-button img {
+    .image-button img {
         width: 20px;
         height: 20px;
         margin: 2.5px;
         opacity: 0.7;
     }
 
-    #settings-button:hover img {
+    .image-button:hover img {
         opacity: 1;
+    }
+
+    #settings-button {
+        position: absolute;
+        right: 12px;
+        top: 46px;
     }
 
     /* SearchResultList styling */
@@ -159,6 +162,7 @@
         border-collapse: collapse;
         width: 260px;
         padding: 10px;
+        min-height: 60px;
     }
 
     #result-list li:last-child {
@@ -169,8 +173,21 @@
         background-color: #eeeeee;
     }
 
+    #result-list .left-column {
+        width: 228px;
+        float: left;
+    }
+
+    #result-list .right-column {
+        float: right;
+    }
+
     #result-list a:hover {
         text-decoration: none;
+    }
+
+    .result-btn-insert-image {
+        margin-top: 5px;
     }
 
     .result-content {
@@ -242,6 +259,28 @@
         width: 100%;
         height: auto;
         margin-top: 5px;
+    }
+
+    .gallery-item {
+        position: relative;
+    }
+
+    .gallery-btn-insert-image {
+        position: absolute;
+        bottom: 20px;
+        margin-left: auto;
+        margin-right: auto;
+        left: 0;
+        right: 0;
+        display: none;
+    }
+
+    .gallery-item:hover .gallery-btn-insert-image {
+        display: block;
+    }
+
+    .gallery-item:hover .gallery-img {
+        opacity: 0.7;
     }
 
     /* bottom branding */

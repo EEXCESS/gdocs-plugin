@@ -134,6 +134,10 @@
                 var item = items[i];
 
                 var li = $('<li></li>');
+                var leftColumn = $('<div class="left-column"></div>');
+                li.append(leftColumn);
+                var rightColumn = $('<div class="right-column"></div>');
+                li.append(rightColumn);
 
                 // description
                 var description = item.description;
@@ -146,7 +150,7 @@
                 // link
                 var uri = item.documentBadge.uri;
                 var link = $('<a href="' + uri +  '" target="_blank" title="' + description + '"></a>');
-                li.append(link);
+                leftColumn.append(link);
 
                 // item containers
                 var contentDiv = $('<div class="result-content"></div>');
@@ -163,6 +167,18 @@
                 }
                 contentDiv.append($('<span class="result-title">' + title + '</span>'));
 
+                // insert link buttons
+                var insertAsLinkButton = $(
+                        '<div class="image-button">' +
+                        '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_LINK') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/link.png">' +
+                '</div>');
+                insertAsLinkButton.data('uri', uri);
+                insertAsLinkButton.data('title', title);
+                insertAsLinkButton.click(function() {
+                    google.script.run.insertLink($(this).data('uri'), $(this).data('title'));
+                });
+                rightColumn.append(insertAsLinkButton);
+
                 // type
                 var mediaType = item.mediaType;
                 if (typeof mediaType === 'undefined' || mediaType === '') {
@@ -176,8 +192,19 @@
                 var image = item.previewImage;
                 if (typeof image === 'undefined' || image === '') {
                     image = "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
-                } else { // add item to image gallery
+                } else { // add item to image gallery and insert button
                     this._addImageToGallery(image, title, uri);
+
+                    // insert image button
+                    var insertImageButton = $(
+                            '<div class="image-button result-btn-insert-image">' +
+                            '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
+                    '</div>');
+                    insertImageButton.data('uri', image);
+                    insertImageButton.click(function() {
+                        google.script.run.insertImage($(this).data('uri'));
+                    });
+                    rightColumn.append(insertImageButton);
                 }
                 var img = $('<img align="left" class="result-image" mediatype="' + mediaType + '" src="' + image + '"/>');
                 contentDiv.prepend(img);
@@ -279,7 +306,11 @@
      * @param   uri     recommendation's uri
      */
     SearchResultList.prototype._addImageToGallery  =  function(image, title, uri) {
+        var div = $('<div class="gallery-item"></div>');
+
+        // add image
         var link = $('<a title="<?!= msg('SEARCH_RESULT_LIST_TITLE') ?>:\n' + title + '" href="' + uri + '" target="_blank"></a>');
+        div.append(link);
         var img = document.createElement('img');
         img.className = 'gallery-img';
         link.append(img);
@@ -287,15 +318,26 @@
         var _this = this;
         img.onload = function(){
             if (_this._galleryLeftHeight > _this._galleryRightHeight) {
-                _this._galleryRight.append(link);
+                _this._galleryRight.append(div);
                 _this._galleryRightHeight += this.height;
             }  else {
-                _this._galleryLeft.append(link);
+                _this._galleryLeft.append(div);
                 _this._galleryLeftHeight += this.height;
             }
         };
 
         img.src = image;
+
+        // add insert button
+        var insertButton = $(
+                '<div class="image-button gallery-btn-insert-image">' +
+                '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
+        '</div>');
+        insertButton.data('uri', image);
+        insertButton.click(function() {
+            google.script.run.insertImage($(this).data('uri'));
+        });
+        div.append(insertButton);
     };
 
     /**

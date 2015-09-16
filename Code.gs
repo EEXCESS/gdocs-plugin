@@ -346,3 +346,72 @@ function inArray( elem, arr, arrKey) {
 
     return -1;
 }
+
+function insertLink(link, displayName) {
+    var doc = DocumentApp.getActiveDocument();
+    var body = doc.getBody();
+    var paragraphIndex;
+
+    var cursor = doc.getCursor();
+    var paragraph;
+
+    if (cursor) {
+        paragraph = cursor.getElement();
+    }
+
+    var selection = doc.getSelection();
+
+    if (selection) {
+        var selectedElements = selection.getSelectedElements();
+        var selectedElement = selectedElements[0];
+
+        //holds the paragraph
+        var paragraph = selectedElement.getElement();
+    }
+
+    if (paragraph) {
+        while (paragraph.getType() !== DocumentApp.ElementType.PARAGRAPH) {
+            paragraph = paragraph.getParent();
+        }
+
+        //get the index of the paragraph in the body
+        paragraphIndex = body.getChildIndex(paragraph) + 1;
+
+        body.insertParagraph(paragraphIndex, '').appendText(displayName).setLinkUrl(link);
+    }
+}
+
+function insertImage(uri) {
+    var doc = DocumentApp.getActiveDocument();
+    var body = doc.getBody();
+    var img = UrlFetchApp.fetch(uri).getBlob();
+    var paragraphIndex;
+
+    var cursor = doc.getCursor();
+    var paragraph;
+
+    if (cursor) {
+        paragraph = cursor.getElement();
+    }
+
+    var selection = doc.getSelection();
+
+    if (selection) {
+        var selectedElements = selection.getSelectedElements();
+        var selectedElement = selectedElements[0];
+
+        //holds the paragraph
+        var paragraph = selectedElement.getElement();
+    }
+
+    if (paragraph) {
+        while (paragraph.getType() !== DocumentApp.ElementType.PARAGRAPH) {
+            paragraph = paragraph.getParent();
+        }
+
+        //get the index of the paragraph in the body
+        paragraphIndex = body.getChildIndex(paragraph) + 1;
+
+        body.insertParagraph(paragraphIndex, '').appendInlineImage(img);
+    }
+}
