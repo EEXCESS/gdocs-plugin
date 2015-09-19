@@ -134,10 +134,19 @@
                 var item = items[i];
 
                 var li = $('<li></li>');
-                var leftColumn = $('<div class="left-column"></div>');
-                li.append(leftColumn);
-                var rightColumn = $('<div class="right-column"></div>');
-                li.append(rightColumn);
+
+                // item containers
+                var contentDiv = $('<div class="result-container"></div>');
+                li.append(contentDiv);
+
+                var resultContent = $('<div class="result-content"></div>');
+                contentDiv.append(resultContent);
+
+                var resultButtons = $('<div class="result-buttons"></div>');
+                contentDiv.append(resultButtons);
+
+                var resultFooter = $('<div class="result-footer"></div>');
+                li.append(resultFooter);
 
                 // description
                 var description = item.description;
@@ -150,13 +159,8 @@
                 // link
                 var uri = item.documentBadge.uri;
                 var link = $('<a href="' + uri +  '" target="_blank" title="' + description + '"></a>');
-                leftColumn.append(link);
-
-                // item containers
-                var contentDiv = $('<div class="result-content"></div>');
-                var footerDiv = $('<div class="result-footer"></div>');
-                link.append(contentDiv);
-                link.append(footerDiv);
+                resultContent.append(link);
+                resultContent = link;
 
                 // title
                 var title = item.title;
@@ -165,7 +169,7 @@
                 } else {
                     title = this._formatTitle(title);
                 }
-                contentDiv.append($('<span class="result-title">' + title + '</span>'));
+                resultContent.append($('<span class="result-title">' + title + '</span>'));
 
                 // insert link buttons
                 var insertAsLinkButton = $(
@@ -177,7 +181,7 @@
                 insertAsLinkButton.click(function() {
                     google.script.run.insertLink($(this).data('uri'), $(this).data('title'));
                 });
-                rightColumn.append(insertAsLinkButton);
+                resultButtons.append(insertAsLinkButton);
 
                 // type
                 var mediaType = item.mediaType;
@@ -186,7 +190,7 @@
                 }
                 mediaType = mediaType.toLowerCase(); // TODO rm lowercase if issue fixed: https://github.com/EEXCESS/recommender/issues/16
                 var type = $('<span class="result-type secondary"><?!= msg('SEARCH_RESULT_LIST_MEDIATYPE') ?>: ' + this._getMediaTypeName(mediaType) + '</span>');
-                footerDiv.append(type);
+                resultFooter.append(type);
 
                 // image
                 var image = item.previewImage;
@@ -204,23 +208,23 @@
                     insertImageButton.click(function() {
                         google.script.run.insertImage($(this).data('uri'));
                     });
-                    rightColumn.append(insertImageButton);
+                    resultButtons.append(insertImageButton);
                 }
                 var img = $('<img align="left" class="result-image" mediatype="' + mediaType + '" src="' + image + '"/>');
-                contentDiv.prepend(img);
+                resultContent.prepend(img);
 
                 // date
                 var date = item.date;
                 if (date !== 'undefined' && date !== '' && date !== 'unknown') {
                     var dateLabel = $('<span class="result-date secondary">' + this._formatDate(date) + '</span>');
-                    footerDiv.append(dateLabel);
+                    resultFooter.append(dateLabel);
                 }
 
                 // provider
                 var provider = item.documentBadge.provider;
                 if (typeof provider !== 'undefined') {
                     var providerFormatted = formatString(provider);
-                    footerDiv.append($('<img alt="' + provider + '" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '" src="http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPartnerFavIcon?partnerId=' + provider + '" class="partner-icon" />'));
+                    resultFooter.append($('<span class="result-provider secondary" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '">' + shortenString(provider, 15) + '</span>'));
                     $(li).addClass('provider-' + providerFormatted);
                 }
 
@@ -231,11 +235,6 @@
                 $(this).unbind("error");
                 var mediaType = $(this).attr("mediaType");
                 $(this).attr("src", "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
-            });
-
-            this._results.find('.partner-icon').error(function() {
-                $(this).unbind("error");
-                $(this).hide();
             });
         }
 
@@ -263,7 +262,7 @@
         var maxDateLength = 7;
 
         if (date.length > maxDateLength) {
-            date = date.substring(0, maxDateLength) + '...';
+            date = date.substring(0, maxDateLength);
         }
 
         return date;

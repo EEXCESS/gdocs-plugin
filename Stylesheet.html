@@ -70,7 +70,7 @@
 
     #settings-button {
         position: absolute;
-        right: 12px;
+        right: 20px;
         top: 46px;
     }
 
@@ -162,7 +162,6 @@
         border-collapse: collapse;
         width: 260px;
         padding: 10px;
-        min-height: 60px;
     }
 
     #result-list li:last-child {
@@ -173,12 +172,13 @@
         background-color: #eeeeee;
     }
 
-    #result-list .left-column {
+    .result-content {
         width: 228px;
         float: left;
     }
 
-    #result-list .right-column {
+    .result-buttons {
+        padding-bottom: 5px;
         float: right;
     }
 
@@ -190,8 +190,8 @@
         margin-top: 5px;
     }
 
-    .result-content {
-        display: inline-block;
+    .result-container {
+        overflow: auto;
     }
 
     .result-image {
@@ -206,21 +206,21 @@
     }
 
     .result-footer {
-        position: relative;
         text-align: center;
-        height: 16px;
+        margin-right: 5px;
+        visibility: hidden;
+    }
+
+    #result-list li:hover .result-footer {
+        visibility: visible;
     }
 
     .result-type {
-        position: absolute;
-        left: 0;
+        float: left;
     }
 
-    .partner-icon {
-        width: 16px;
-        height: 16px;
-        position: absolute;
-        right: 0;
+    .result-provider {
+        float: right;
     }
 
     /* result categories */
