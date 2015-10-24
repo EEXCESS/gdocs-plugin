@@ -215,7 +215,7 @@
 
                 // date
                 var date = item.date;
-                if (date !== 'undefined' && date !== '' && date !== 'unknown') {
+                if (date && date !== 'undefined' && date !== '' && date !== 'unknown') {
                     var dateLabel = $('<span class="result-date secondary">' + this._formatDate(date) + '</span>');
                     resultFooter.append(dateLabel);
                 }
