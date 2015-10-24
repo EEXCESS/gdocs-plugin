@@ -1,0 +1,418 @@
+<script type="text/javascript">
+    /**
+     * Initializes the search result list displaying the recommendations. Tabs have to be contained in a list with the
+     * style class 'eexcess-tabs' and the results will be inserted into a div-container with the id 'results'.
+     */
+    var SearchResultList = function() {
+        // init
+        this._results = $('#results');
+        var _this = this;
+
+        $('.eexcess-tabs li').on('click', function() {
+            if ($(this).hasClass('active')) return; // only refresh if tab changed
+
+            var id = $(this).attr('id');
+            _this.openTab(id);
+        });
+
+        // messages
+        this._messages = $('<div id="messages"></div>');
+        this._loader = $('<img id="ajax-loader" src="http://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />');
+        this._error = $('<span id="error-msg" class="error"></span>');
+        this._info = $('<span id="info-msg"></span>');
+
+        this._messages.append(this._loader);
+        this._messages.append(this._error);
+        this._messages.append(this._info);
+        this._results.append(this._messages);
+
+        // result list
+        this._resultList = $('<ul id="result-list"></ul>');
+        this._results.append(this._resultList);
+
+        // result gallery
+        this._resultGallery = $('<div id="result-gallery"></div>');
+        this._galleryLeft = $('<div id="gallery-left" class="gallery"></div>');
+        this._galleryLeftHeight = 0;
+        this._galleryRight = $('<div id="gallery-right" class="gallery"></div>');
+        this._galleryRightHeight = 0;
+
+        this._resultGallery.append(this._galleryLeft);
+        this._resultGallery.append(this._galleryRight);
+
+        this._results.append(this._resultGallery);
+
+        this._hideAll();
+        this.restoreTab(true);
+    };
+
+    /**
+     * Loads and opens the last selected or default tab if no tab was stored yet.
+     *
+     * @param {Boolean} welcomeMsg if this flag is true a welcome message will be displayed, otherwise not
+     */
+    SearchResultList.prototype.restoreTab = function(welcomeMsg) {
+        // load last opened tab
+        var _this = this;
+        google.script.run.withSuccessHandler(function (tab) {
+            _this.openTab(tab);
+
+            if (welcomeMsg) {
+                _this.showInfo('<?!= msg('SEARCH_RESULT_LIST_WELCOME_MSG') ?>');
+            }
+        }).getProperty('EEXCESS_TAB');
+    };
+
+    /**
+     * Displays and opens the current selected tab. If no results can be displayed an info message will be displayed.
+     *
+     * @param tab   new tab to open, if unsepecified the actual activated tab will be opened
+     */
+    SearchResultList.prototype.openTab = function(tab) {
+        // store new opened tab
+        google.script.run.setProperty('EEXCESS_TAB', tab);
+
+        $('.eexcess-tabs li.active').removeClass('active');
+
+        var length;
+        this._hideAll();
+
+        $('#results').removeClass();
+        switch (tab) {
+            case 'image-tab':
+                $('#image-tab').addClass('active');
+                this._resultGallery.show();
+                length= $(this._galleryLeft).find("a").length +$(this._galleryRight).find("a").length;
+                break;
+            case 'cultural-tab':
+                $('#cultural-tab').addClass('active');
+                this._resultList.show();
+                $(this._resultList).attr('class', 'res-type-cultural');
+                length=  $('#result-list').find('li').filter(function() {
+                    return $(this).css('display') === 'list-item';
+                }).length;
+                break;
+            case 'scholarly-tab':
+                $('#scholarly-tab').addClass('active');
+                this._resultList.show();
+                $(this._resultList).attr('class', 'res-type-scholarly');
+                length=  $('#result-list').find('li').filter(function() {
+                    return $(this).css('display') === 'list-item';
+                }).length;
+                break;
+            default: // all-tab
+                $('#all-tab').addClass('active');
+                this._resultList.show();
+                $(this._resultList).attr('class', 'res-type-all');
+                length=  $('#result-list').find('li').length;
+        }
+
+        if(length === 0) {
+            this.showInfo('<?!= msg('SEARCH_RESULT_LIST_EMPTY') ?>');
+        }
+    };
+
+    /**
+     * Diplays the results given as parameter.
+     *
+     * @param data  recommender's response to a search request
+     */
+    SearchResultList.prototype.showResults = function(data) {
+        this._hideAll();
+        this._resultList.empty();
+        this._emptyGallery();
+
+        try{
+            data = JSON.parse(data);
+        }catch(e){
+            data = null;
+        }
+
+        if (!(data === null || data.totalResults === 0 || data.totalResults === '0')) { // show results
+            var items = data.result;
+            for (var i = 0, len = items.length; i < len; i++) {
+                var item = items[i];
+
+                var li = $('<li></li>');
+
+                // item containers
+                var contentDiv = $('<div class="result-container"></div>');
+                li.append(contentDiv);
+
+                var resultContent = $('<div class="result-content"></div>');
+                contentDiv.append(resultContent);
+
+                var resultButtons = $('<div class="result-buttons"></div>');
+                contentDiv.append(resultButtons);
+
+                var resultFooter = $('<div class="result-footer"></div>');
+                li.append(resultFooter);
+
+                // description
+                var description = item.description;
+                if (typeof description === 'undefined' || description === '') {
+                    description = '<?!= msg('SEARCH_RESULT_LIST_NO_DESCRIPTION') ?>';
+                } else {
+                    description = '<?!= msg('SEARCH_RESULT_LIST_DESCRIPTION') ?>:\n' + shortenString(description, 400);
+                }
+
+                // link
+                var uri = item.documentBadge.uri;
+                var link = $('<a href="' + uri +  '" target="_blank" title="' + description + '"></a>');
+                resultContent.append(link);
+                resultContent = link;
+
+                // title
+                var title = item.title;
+                if (typeof title === 'undefined') {
+                    title = '<?!= msg('SEARCH_RESULT_LIST_NO_TITLE') ?>';
+                } else {
+                    title = this._formatTitle(title);
+                }
+                resultContent.append($('<span class="result-title">' + title + '</span>'));
+
+                // insert link buttons
+                var insertAsLinkButton = $(
+                        '<div class="image-button">' +
+                        '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_LINK') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/link.png">' +
+                '</div>');
+                insertAsLinkButton.data('uri', uri);
+                insertAsLinkButton.data('title', title);
+                insertAsLinkButton.click(function() {
+                    google.script.run.insertLink($(this).data('uri'), $(this).data('title'));
+                });
+                resultButtons.append(insertAsLinkButton);
+
+                // type
+                var mediaType = item.mediaType;
+                if (typeof mediaType === 'undefined' || mediaType === '') {
+                    mediaType = 'unknown';
+                }
+                mediaType = mediaType.toLowerCase(); // TODO rm lowercase if issue fixed: https://github.com/EEXCESS/recommender/issues/16
+                var type = $('<span class="result-type secondary"><?!= msg('SEARCH_RESULT_LIST_MEDIATYPE') ?>: ' + this._getMediaTypeName(mediaType) + '</span>');
+                resultFooter.append(type);
+
+                // image
+                var image = item.previewImage;
+                if (typeof image === 'undefined' || image === '') {
+                    image = "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
+                } else { // add item to image gallery and insert button
+                    this._addImageToGallery(image, title, uri);
+
+                    // insert image button
+                    var insertImageButton = $(
+                            '<div class="image-button result-btn-insert-image">' +
+                            '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
+                    '</div>');
+                    insertImageButton.data('uri', image);
+                    insertImageButton.click(function() {
+                        google.script.run.insertImage($(this).data('uri'));
+                    });
+                    resultButtons.append(insertImageButton);
+                }
+                var img = $('<img align="left" class="result-image" mediatype="' + mediaType + '" src="' + image + '"/>');
+                resultContent.prepend(img);
+
+                // date
+                var date = item.date;
+                if (date !== 'undefined' && date !== '' && date !== 'unknown') {
+                    var dateLabel = $('<span class="result-date secondary">' + this._formatDate(date) + '</span>');
+                    resultFooter.append(dateLabel);
+                }
+
+                // provider
+                var provider = item.documentBadge.provider;
+                if (typeof provider !== 'undefined') {
+                    var providerFormatted = formatString(provider);
+                    resultFooter.append($('<span class="result-provider secondary" title="<?!= msg('SEARCH_RESULT_LIST_PROVIDER') ?>: ' + provider + '">' + shortenString(provider, 15) + '</span>'));
+                    $(li).addClass('provider-' + providerFormatted);
+                }
+
+                this._resultList.append(li);
+            }
+
+            this._results.find('.result-image').error(function() {
+                $(this).unbind("error");
+                var mediaType = $(this).attr("mediaType");
+                $(this).attr("src", "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
+            });
+        }
+
+        this.restoreTab();
+    };
+
+    /**
+     * Shortens the title to 140 characters and converts uppercase titles to lowercase with first character in
+     * uppercase.
+     *
+     * @param title
+     */
+    SearchResultList.prototype._formatTitle = function(title) {
+        title = shortenString(title, 140);
+        var uppercaseTitle = title.toUpperCase();
+
+        if (title === uppercaseTitle) {
+            title = title.substring(0,1) + title.toLowerCase().substring(1);
+        }
+
+        return title;
+    };
+
+    SearchResultList.prototype._formatDate = function(date) {
+        var maxDateLength = 7;
+
+        if (date.length > maxDateLength) {
+            date = date.substring(0, maxDateLength);
+        }
+
+        return date;
+    };
+
+    SearchResultList.prototype._getMediaTypeName = function(mediaType) {
+        switch (mediaType) {
+            case 'text':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_TEXT') ?>';
+            case 'audio':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_AUDIO') ?>';
+            case '3d':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_3D') ?>';
+            case 'image':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_IMAGE') ?>';
+            case 'video':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_VIDEO') ?>';
+            case 'other':
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_OTHER') ?>';
+            default: // unknown
+                return '<?!= msg('SEARCH_RESULT_LIST_MEDIATYPE_UNKNOWN') ?>';
+        }
+    };
+
+    /**
+     * Empties the gallery and resets its height counters to zero.
+     */
+    SearchResultList.prototype._emptyGallery = function() {
+        this._galleryLeft.empty();
+        this._galleryLeftHeight = 0;
+        this._galleryRight.empty();
+        this._galleryRightHeight = 0;
+    };
+
+    /**
+     * Adds an image to the gallery. The image will be placed in the gallery which has currently the smallest height.
+     *
+     * @param   image   image's uri
+     * @param   title   recommendation's title
+     * @param   uri     recommendation's uri
+     */
+    SearchResultList.prototype._addImageToGallery  =  function(image, title, uri) {
+        var div = $('<div class="gallery-item"></div>');
+
+        // add image
+        var link = $('<a title="<?!= msg('SEARCH_RESULT_LIST_TITLE') ?>:\n' + title + '" href="' + uri + '" target="_blank"></a>');
+        div.append(link);
+        var img = document.createElement('img');
+        img.className = 'gallery-img';
+        link.append(img);
+
+        var _this = this;
+        img.onload = function(){
+            if (_this._galleryLeftHeight > _this._galleryRightHeight) {
+                _this._galleryRight.append(div);
+                _this._galleryRightHeight += this.height;
+            }  else {
+                _this._galleryLeft.append(div);
+                _this._galleryLeftHeight += this.height;
+            }
+        };
+
+        img.src = image;
+
+        // add insert button
+        var insertButton = $(
+                '<div class="image-button gallery-btn-insert-image">' +
+                '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
+        '</div>');
+        insertButton.data('uri', image);
+        insertButton.click(function() {
+            google.script.run.insertImage($(this).data('uri'));
+        });
+        div.append(insertButton);
+    };
+
+    /**
+     * Displays the ajax loader and hides all other content in the search result list.
+     */
+    SearchResultList.prototype.showAjaxLoader = function() {
+        this._hideAll();
+        this._loader.show();
+        this._messages.show();
+    };
+
+    /**
+     * Hides all items including messages (ajax loader, error-msg, info-msg), result list and result gallery.
+     */
+    SearchResultList.prototype._hideAll = function() {
+        this._messages.hide();
+        this._loader.hide();
+        this._error.hide();
+        this._info.hide();
+
+        this._resultList.hide();
+        this._resultGallery.hide();
+    };
+
+    /**
+     * Displays an error message in the search result list and hides all other items.
+     *
+     * @param errorMsg The error message to display.
+     */
+    SearchResultList.prototype.showError = function(errorMsg) {
+        this._hideAll();
+        this._error.text(errorMsg);
+        this._error.show();
+        this._messages.show();
+    };
+
+    /**
+     * Displays an info message in the search result list and hides all other items.
+     *
+     * @param infoMsg The info message to display.
+     */
+    SearchResultList.prototype.showInfo = function(infoMsg) {
+        this._hideAll();
+        this._info.text(infoMsg);
+        this._info.show();
+        this._messages.show();
+    };
+
+    /**
+     * Shortens a given string to the given length plus the remaining characters until the next word.
+     * starts.
+     *
+     * @param string   string to shorten
+     * @param   length  desired length
+     * @returns {string}    shortened string
+     */
+    function shortenString(string, length) {
+        var firstPart = string.substring(0, length);
+        var remainder = string.substring(length, string.length);
+        var endPos = remainder.search(/[.!?; ]/);
+
+        if (endPos != -1) {
+            firstPart += remainder.substring(0, endPos);
+            firstPart += "...";
+        }
+
+        return firstPart;
+    }
+
+    /**
+     * Formats a string to lowercase and replaces space with '-'.
+     *
+     * @param string
+     * @returns {string}
+     */
+    function formatString(string) {
+        return string.replace(/\s+/g, '-').toLowerCase();
+    }
+</script>

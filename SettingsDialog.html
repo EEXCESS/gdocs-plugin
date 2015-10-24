@@ -1,0 +1,169 @@
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+<!-- The CSS package above applies Google styling to buttons and other elements. -->
+
+<style>
+    .settings-label {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+    }
+
+    #input-result-number {
+        margin-right: 5px;
+        width: 60px;
+    }
+
+    .provider-settings {
+        position: absolute;
+        top: 83px;
+        right: 8px;
+        left: 8px;
+        width: auto;
+    }
+
+    #ajax-loader {
+        width: 16px;
+        height: 16px;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        padding: 10px;
+    }
+
+    #providers {
+        position: absolute;
+        top: 111px;
+        bottom: 67px;
+        overflow-y: auto;
+        left: 8px;
+        right: 8px;
+        overflow-x: hidden;
+    }
+
+    .settings-buttons {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        height: 29px;
+        right: 8px;
+    }
+</style>
+
+<div class="modal-dialog-content script-prompt-contents">
+    <div class="settings-label"><?!= msg('SETTINGS_RESULT_NUM') ?>:</div>
+    <div>
+        <input id="input-result-number" type="number" min="1" placeholder="60">
+        <span id="result-number-error" class="error" style="display: none"></span>
+    </div>
+
+    <div class="settings-label provider-settings"><?!= msg('SETTINGS_PROVIDERS') ?>:</div>
+    <div id="providers">
+        <img id="ajax-loader" src="http://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />
+    </div>
+</div>
+
+<div class="modal-dialog-buttons settings-buttons">
+    <button id="save-button" class="action"><?!= msg('SETTINGS_SAVE') ?></button>
+    <button onclick="google.script.host.close()"><?!= msg('SETTINGS_CANCEL') ?></button>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript">
+    /**
+     * On document load.
+     */
+    $(function () {
+        // load settings
+        google.script.run
+                .withSuccessHandler(
+                function (settings) {
+                    try {
+                        settings = JSON.parse(settings);
+                    } catch (e) {
+                        settings = [];
+                    }
+
+                    $('#ajax-loader').hide();
+
+                    for (var i = 0; i < settings.length; i++) {
+                        var partner = settings[i];
+                        var div = $('<div></div>');
+
+                        if (partner.active) {
+                            div.append('<input type="checkbox" id="checkbox' + i + '" checked>');
+                        } else {
+                            div.append('<input type="checkbox" id="checkbox' + i + '">');
+                        }
+
+                        div.append('<label for="checkbox' + i + '">' + partner.name + '</label>');
+                        $('#providers').append(div);
+                    }
+                })
+                .withFailureHandler(
+                function (error) {
+                    // ignore errors
+                    alert(error);
+                })
+                .getPartnerSettings();
+
+        google.script.run
+                .withSuccessHandler(
+                function (resultNumber) {
+                    $('#input-result-number').val(resultNumber);
+                })
+                .withFailureHandler(
+                function (error) {
+                    // ignore errors
+                    alert(error);
+                })
+                .getResultNumber();
+
+        // store settings
+        $('#save-button').click(storeSettings);
+    });
+
+    function storeSettings() {
+        // number of results
+        var resultNumber = $('#input-result-number').val();
+
+        if (!(resultNumber > 0)) {
+            showError('<?!= msg('SETTINGS_RESULT_NUM_TOO_SMALL') ?>');
+            return;
+        }
+
+        // partner settings
+        var partnerSettings = [];
+        var providerLabels = $('#providers').find('label');
+
+        for (var i=0;i<providerLabels.length;i++) {
+            var label = providerLabels[i];
+            var name = $(label).html();
+            var id = $(label).attr('for');
+            var active = $('#' + id).is(':checked');
+
+            partnerSettings.push({"name": name, "active": active});
+        }
+        var partnerSettings = JSON.stringify(partnerSettings);
+
+        // make settings persistent on server
+        google.script.run
+                .withSuccessHandler(
+                function () {
+                    google.script.host.close();
+                })
+                .withFailureHandler(
+                function () {
+                    showError('<?!= msg('ERROR') ?>');
+                })
+                .saveSettings(resultNumber, partnerSettings);
+    }
+
+    function showError(message) {
+        var error = $('#result-number-error');
+        error.text(message);
+        error.show();
+    }
+
+    function hideError() {
+        $('#result-number-error').hide();
+    }
+</script>

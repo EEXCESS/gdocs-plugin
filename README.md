@@ -11,3 +11,17 @@
 
 The source code can be found ( and edited ) directly inside the browser. If you want to do this, you have to open the Script Editor ( Top Menu: Tools -> Script Editor ).
 
+## Texts for Docs add-on deployment
+
+### Post-install tip
+
+Open the E-Explorer by going to Add-ons > E-Explorer > Start
+
+### Short description
+
+This EEXCESS add-on enables searching for data from cultural and scientific databases without leaving the currently edited document.
+
+### Detailed description
+
+The EEXCESS technologies serve as recommendation tools for your online activities. You, as a user, will get recommendations from cultural and scientific databases.
+EEXCESS tools integrate into your ongoing working process. You won´t have to leave the document you are currently editing.

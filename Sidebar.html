@@ -1,28 +1,44 @@
 <?!= include('Stylesheet') ?>
 
-<div class="sidebar fixed-top">
+<div id="header" class="sidebar fixed-top">
     <div id="search-container" class="form-group inline-form">
-        <input id="eexcess-search" placeholder="Search" aria-label="Search" type="search" />
-        <button class="action" id="btn-search">Search</button>
+        <input id="eexcess-search" placeholder="Search" aria-label="<?!= msg('SEARCHBAR_SEARCH') ?>" type="text" />
+        <button class="action" id="btn-search"><?!= msg('SEARCHBAR_SEARCH') ?></button>
     </div>
-    <div class="block"></div>
+    <div class="tab-container">
+        <ul class="eexcess-tabs">
+            <li id="all-tab">
+                <a><?!= msg('SEARCH_RESULT_LIST_ALL') ?></a>
+            </li>
+            <li id="image-tab">
+                <a title="<?!= msg('SEARCH_RESULT_LIST_IMAGES_TOOLTIP') ?>"><?!= msg('SEARCH_RESULT_LIST_IMAGES') ?></a>
+            </li>
+            <li id="cultural-tab">
+                <a title="<?!= msg('SEARCH_RESULT_LIST_CULTURAL_TOOLTIP') ?>"><?!= msg('SEARCH_RESULT_LIST_CULTURAL') ?></a>
+            </li>
+            <li id="scholarly-tab">
+                <a title="<?!= msg('SEARCH_RESULT_LIST_SCHOLARLY_TOOLTIP') ?>"><?!= msg('SEARCH_RESULT_LIST_SCHOLARLY') ?></a>
+            </li>
+        </ul>
+        <div id="settings-button" class="image-button">
+            <img title="<?!= msg('SETTINGS') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/settings.png">
+        </div>
+    </div>
 </div>
 
-<div id="eexcess-recommendations" class="sidebar form-group">
-    <ul id="eexcess-recommendations-list">
-    </ul>
-    <div id="info" class="gray">Please select some text or use the search bar.</div>
-</div>
+<div id="results" class="sidebar form-group"></div>
 
 <div class="sidebar bottom">
     <div class="block"></div>
-    <div class="branding-container">
-        <img alt="Add-on logo" class="logo" src="http://eexcess.eu/wp-content/uploads/2013/04/eexcess_Logo_neu1.jpg">
-        <a class="info-link" href="http://eexcess.eu/" title="EEXCESS" target="_blank">more info</a>
-    </div>
-    <div class="branding-text">
-        <span class="gray">Search digital library content</span>
-    </div>
+    <a href="http://eexcess.eu/" title="EEXCESS" target="_blank">
+        <div class="branding-container">
+            <img alt="Add-on logo" class="logo" src="http://dimis.fim.uni-passau.de/eexcess/eexcess_Logo_neu1.jpg">
+        </div>
+        <div class="branding-text">
+            <span class="gray"><?!= msg('BRANDING_TEXT') ?></span>
+        </div>
+    </a>
 </div>
 
+<?!= include('SearchResultList') ?>
 <?!= include('Scripts') ?>

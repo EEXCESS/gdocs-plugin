@@ -8,6 +8,7 @@
     // global variables
     var lastSelectedText;
     var lastSearchedText;
+    var searchResultList;
 
     /**
      * On document load.
@@ -22,40 +23,50 @@
 
         $('#btn-search').click(getRecommendationsFromInput);
 
+        // init search results list
+        searchResultList = new SearchResultList();
+
+        $('#settings-button').click(openSettings);
+
         inspectSelectedText();
     });
+
+    function openSettings() {
+        google.script.run.openSettingsDialog();
+    }
 
     /**
      * Runs a server-side function to get the recommendations for the user-entered text and update
      * the sidebar UI with the results from the privacy proxy.
      */
     function getRecommendationsFromInput() {
-        removeInfo();
-        removeError();
-
         var keyword = $("#eexcess-search").val();
         if(keyword == "") {
-            showError("Please enter some text.");
+            searchResultList.showError('<?!= msg('SEARCHBAR_EMPTY') ?>');
         } else {
             this.disabled = true;
             fetchAndDisplayRecommendations(keyword, this);
         }
     }
 
+    /**
+     * Checks if the current selected text in the document has changed. If it changed automatically a search request
+     * will be submitted to the recommender.
+     */
     function inspectSelectedText() {
         google.script.run
                 .withSuccessHandler(
-                    function(selectedText) {
-                        if (selectedText.length > 0 && !arraysEqual(selectedText, lastSelectedText)) {
-                            lastSelectedText = selectedText;
-                            $("#eexcess-search").val(selectedText);
-                            $('#btn-search').click();
-                        }
-                    })
+                function(selectedText) {
+                    if (selectedText.length > 0 && !arraysEqual(selectedText, lastSelectedText)) {
+                        lastSelectedText = selectedText;
+                        $("#eexcess-search").val(selectedText);
+                        $('#btn-search').click();
+                    }
+                })
                 .withFailureHandler(
-                    function() {
-                        // ignore errors
-                    })
+                function() {
+                    // ignore errors
+                })
                 .getSelectedText();
 
         window.setTimeout(inspectSelectedText, REFRESH_INTERVAL);
@@ -69,14 +80,7 @@
      * @param button    disabled button which triggered the action or undefined if action was not triggered by a button
      */
     function fetchAndDisplayRecommendations(text, button){
-        // Remove error messages TODO remove after error messages displayed in recommendations list
-        removeError();
-
-        // Clear previously loaded recommendations and displayed errors
-        $("#eexcess-recommendations-list").empty();
-
-        // Insert Ajax loader icon
-        showAjaxLoader();
+        searchResultList.showAjaxLoader();
 
         var responded = false;
         var timeout = false;
@@ -85,10 +89,9 @@
         setTimeout(function() {
             if(!responded) {
                 timeout = true;
-                removeAjaxLoader();
 
                 if (lastSearchedText == text)
-                    showError("The server timed out waiting for the request.");
+                    searchResultList.showError("<?!= msg('TIMEOUT') ?>");
 
                 if (button)
                     button.disabled = false;
@@ -100,9 +103,7 @@
                 function(recommendations, button) {
                     if(!timeout && lastSearchedText == text){
                         responded = true;
-                        removeAjaxLoader();
-                        // Display Results
-                        showResultList(recommendations);
+                        searchResultList.showResults(recommendations);
 
                         if (button)
                             button.disabled = false;
@@ -110,9 +111,9 @@
                 })
                 .withFailureHandler(
                 function(errorMsg, button) {
-                    if(!timeout && lastSearchedText ==  text) {
-                        removeAjaxLoader();
-                        showError(errorMsg);
+                    if(!timeout && lastSearchedText == text) {
+                        responded = true;
+                        searchResultList.showError(errorMsg);
 
                         if (button)
                             button.disabled = false;
@@ -144,103 +145,5 @@
         }
 
         return true;
-    }
-
-    /**
-     * Inserts the result list
-     *
-     * @param recommendations The results
-     */
-    function showResultList(recommendations) {
-        var container = $("#eexcess-recommendations-list");
-        var titleLength = 30;
-        var descriptionLength = 80;
-        // Parsing the JSON string
-        var o = JSON.parse(recommendations);
-        if(o.totalResults > 0) {
-            // iterate the results and append the list elements
-            $.each(o.result, function() {
-                var title = this.title;
-                if(this.title.length > titleLength) {
-                    title = jQuery.trim(title).substring(0, titleLength).split(" ").slice(0, -1).join(" ") + "...";
-                }
-                var previewImage = "http://dummyimage.com/60x60/999/fff.png&text=+";
-
-                if(this.previewImage) {
-                    previewImage = this.previewImage;
-                }
-
-                var description = "No description available.";
-
-                if(this.description) {
-                    description = this.description;
-                }
-
-                var titleDescription = description;
-                if(description.length > descriptionLength) {
-                    description = jQuery.trim(description).substring(0, descriptionLength).split(" ").slice(0, -1).join(" ") + "...";
-                }
-
-                var template =
-                        '<li>' +
-                        '<a href="' + this.uri + '" target="_blank" class="inner">' +
-                        '<div class="li-img">' +
-                        '<img src="' + previewImage + '" alt="Image Alt Text" />' +
-                        '</div>' +
-                        '<div class="li-text">' +
-                        '<h4 class="li-head" title="' + this.title + '">' + title + '</h4>' +
-                        '<p class="li-provider">Provider: ' + this.facets.provider + '</p>' +
-                        '<p class="li-summary" title="' + titleDescription + '">' + description + '</p>' +
-                        '</div>' +
-                        '</a>' +
-                        '</li>';
-                container.append(template);
-            })
-        } else {
-            showError("No results found");
-        }
-    }
-
-    /**
-     * Inserts a div that contains an error message after a given element.
-     *
-     * @param msg The error message to display.
-     * @param element The element after which to display the error.
-     */
-    function showError(msg) {
-        removeError();
-        var div = $('<div id="error" class="error">' + msg + '</div>');
-        $("#eexcess-recommendations-list").after(div);
-    }
-
-    /**
-     * Removes previously added error messages.
-     */
-    function removeError() {
-        $("#error").remove();
-    }
-
-    /**
-     * Removes the initially added info message.
-     */
-    function removeInfo() {
-        $("#info").remove();
-    }
-
-    /**
-     * Inserts the ajax loader icon.
-     */
-    function showAjaxLoader() {
-        if ($("#ajax-loader-container").length == 0) {
-            var div = $('<div id="ajax-loader-container"><img src="http://mics.fim.uni-passau.de/wp-content/uploads/2014/10/ajax-loader.gif" width="16px" height="16px" alt="ajax loader"/></div>');
-            $("#eexcess-recommendations-list").after(div);
-        }
-    }
-
-    /**
-     * Removes the ajax loader icon (spinner) from the DOM.
-     */
-    function removeAjaxLoader() {
-        $('#ajax-loader-container').remove();
     }
 </script>
