@@ -206,7 +206,7 @@
                     '</div>');
                     insertImageButton.data('uri', image);
                     insertImageButton.click(function() {
-                        google.script.run.insertImage($(this).data('uri'));
+                        google.script.run.insertImage(getDateString(), $(this).data('uri'));
                     });
                     resultButtons.append(insertImageButton);
                 }
@@ -334,7 +334,7 @@
         '</div>');
         insertButton.data('uri', image);
         insertButton.click(function() {
-            google.script.run.insertImage($(this).data('uri'));
+            google.script.run.insertImage(getDateString(), $(this).data('uri'));
         });
         div.append(insertButton);
     };
@@ -414,5 +414,10 @@
      */
     function formatString(string) {
         return string.replace(/\s+/g, '-').toLowerCase();
+    }
+
+    function getDateString() {
+        var date = new Date();
+        return date.toLocaleDateString("<?!= getLocale() ?>", {month: "long", day: "2-digit", year: "numeric"});
     }
 </script>

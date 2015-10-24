@@ -185,6 +185,21 @@ function callProxy(terms) {
     }
 }
 
+var DEFAULT_LOCALE = 'en';
+
+function getLocale() {
+    var locale = Session.getActiveUserLocale();
+
+    if (locale === 'de') {
+        return locale;
+    } else { // return default locale
+        return DEFAULT_LOCALE;
+    }
+}
+
+var messages;
+var defaultMessages;
+
 /**
  * Returns the internationalized message corresponding to the given key. Default language English will be chosen if
  * user's locale is not supported.
@@ -193,20 +208,18 @@ function callProxy(terms) {
  * @returns {String} internationalized message
  */
 function msg(key) {
-    if (!this.messages){
-        var locale = Session.getActiveUserLocale();
-        var file;
-
-        if (locale == 'de') {
-            file = 'messages_de';
-        } else { // use default locale 'en'
-            file = 'messages'
-        }
-
-        this.messages = JSON.parse(HtmlService.createTemplateFromFile(file).evaluate().getContent());
+    if (!messages){
+        messages = JSON.parse(HtmlService.createTemplateFromFile('messages_' + getLocale()).evaluate().getContent());
+        defaultMessages = JSON.parse(HtmlService.createTemplateFromFile('messages_' + DEFAULT_LOCALE).evaluate().getContent());
     }
 
-    return this.messages[key];
+    var msg = messages[key];
+
+    if (!msg) {
+        msg = defaultMessages[key];
+    }
+
+    return msg
 }
 
 /**
@@ -381,7 +394,7 @@ function insertLink(link, displayName) {
     }
 }
 
-function insertImage(uri) {
+function insertImage(date, uri) {
     var doc = DocumentApp.getActiveDocument();
     var body = doc.getBody();
     var img = UrlFetchApp.fetch(uri).getBlob();
@@ -412,6 +425,11 @@ function insertImage(uri) {
         //get the index of the paragraph in the body
         paragraphIndex = body.getChildIndex(paragraph) + 1;
 
-        body.insertParagraph(paragraphIndex, '').appendInlineImage(img);
+        var insertedParagraph = body.insertParagraph(paragraphIndex, '');
+        insertedParagraph.appendInlineImage(img);
+
+        // current date
+        insertedParagraph.appendText('\r' + msg('CITATION_IMAGE_RETRIEVED') + " " + date + " " + msg('CITATION_IMAGE_AT') + " ");
+        insertedParagraph.appendText(uri).setLinkUrl(uri);
     }
 }
