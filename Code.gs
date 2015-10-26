@@ -360,46 +360,59 @@ function inArray( elem, arr, arrKey) {
     return -1;
 }
 
+/**
+ * Inserts a link right after the current cursor position/selection.
+ *
+ * @param link          link's uri
+ * @param displayName   link's name to display
+ */
 function insertLink(link, displayName) {
     var doc = DocumentApp.getActiveDocument();
-    var body = doc.getBody();
-    var paragraphIndex;
 
     var cursor = doc.getCursor();
     var paragraph;
 
     if (cursor) {
-        paragraph = cursor.getElement();
+        var surroundingText = cursor.getSurroundingText().getText();
+        var surroundingTextOffset = cursor.getSurroundingTextOffset();
+
+        cursor.insertText(' ');
+
+        var element = cursor.insertText(displayName);
+        element.setLinkUrl(link);
+
+        // If the cursor follows a non-space character, insert a space and then the link.
+        if (surroundingTextOffset > 0 && surroundingText.charAt(surroundingTextOffset - 1) != ' ')
+            cursor.insertText(' ');
+
+        return;
     }
 
     var selection = doc.getSelection();
 
     if (selection) {
-        var selectedElements = selection.getSelectedElements();
-        var selectedElement = selectedElements[0];
+        var elements = selection.getRangeElements();
+        var element = elements[elements.length - 1];
 
-        //holds the paragraph
-        var paragraph = selectedElement.getElement();
-    }
+        var text = element.getElement().editAsText();
 
-    if (paragraph) {
-        while (paragraph.getType() !== DocumentApp.ElementType.PARAGRAPH) {
-            paragraph = paragraph.getParent();
+        if (text) {
+            var offset = element.getEndOffsetInclusive() + 1;
+
+            text.insertText(offset, ' ' + displayName);
+            text.setLinkUrl(offset + 1, offset + displayName.length, link);
         }
-
-        //get the index of the paragraph in the body
-        paragraphIndex = body.getChildIndex(paragraph) + 1;
-
-        body.insertParagraph(paragraphIndex, '').appendText(displayName).setLinkUrl(link);
     }
 }
 
+/**
+ * Inserts an image specified by its uri to a new paragraph after the current cursor position/selection.
+ *
+ * @param date  current date for image citation string
+ * @param uri   image's uri
+ */
 function insertImage(date, uri) {
     var doc = DocumentApp.getActiveDocument();
-    var body = doc.getBody();
-    var img = UrlFetchApp.fetch(uri).getBlob();
-    var paragraphIndex;
-
     var cursor = doc.getCursor();
     var paragraph;
 
@@ -407,7 +420,11 @@ function insertImage(date, uri) {
         paragraph = cursor.getElement();
     }
 
-    var selection = doc.getSelection();
+    var selection;
+
+    if (!paragraph) {
+        selection = doc.getSelection();
+    }
 
     if (selection) {
         var selectedElements = selection.getSelectedElements();
@@ -423,12 +440,15 @@ function insertImage(date, uri) {
         }
 
         //get the index of the paragraph in the body
-        paragraphIndex = body.getChildIndex(paragraph) + 1;
+        var body = doc.getBody();
+        var paragraphIndex = body.getChildIndex(paragraph) + 1;
 
+        // insert image
         var insertedParagraph = body.insertParagraph(paragraphIndex, '');
+        var img = UrlFetchApp.fetch(uri).getBlob();
         insertedParagraph.appendInlineImage(img);
 
-        // current date
+        // insert citation with current date
         insertedParagraph.appendText('\r' + msg('CITATION_IMAGE_RETRIEVED') + " " + date + " " + msg('CITATION_IMAGE_AT') + " ");
         insertedParagraph.appendText(uri).setLinkUrl(uri);
     }
