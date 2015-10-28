@@ -260,8 +260,16 @@ function fetchProviders() {
     // privacy proxy URL
     var url = serverUrl + "getRegisteredPartners";
 
+    // Options object, that specifies the method and accepted response type of the HTTPRequest
+    var options = {
+        "method": "GET",
+        "headers": {
+            "Accept": "application/json"
+        }
+    };
+
     try {
-        var response = UrlFetchApp.fetch(url);
+        var response = UrlFetchApp.fetch(url, options);
         return response.getContentText();
     } catch (err) {
         throw msg('ERROR');
