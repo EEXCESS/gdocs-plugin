@@ -134,6 +134,14 @@ function getTerms(text) {
     return terms;
 }
 
+var serverUrl = "https://eexcess-dev.joanneum.at/eexcess-privacy-proxy-issuer-1.0-SNAPSHOT/issuer/";
+var origin = {
+    "clientType": "EEXCESS - Google Docs AddOn",
+    "clientVersion": "8.0", //the deployment version in the webstore
+    "module": "Sidebar",
+    "userID": Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Session.getActiveUser().getEmail()).toString() // hash value of uid here: MD5(User-Mail)
+};
+
 /**
  * Calls the privacy proxy
  *
@@ -143,13 +151,18 @@ function getTerms(text) {
  */
 function callProxy(terms) {
     // privacy proxy URL
-    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/recommend";
+    var url = serverUrl + "recommend";
 
     // get result number
     var numResults = getResultNumber();
 
     // POST payload
-    var data = {"numResults": numResults, "partnerList": [], "contextKeywords": []};
+    var data = {
+        "numResults": numResults,
+        "partnerList": [],
+        "contextKeywords": [],
+        "origin": origin
+    };
 
     // set partners
     var partners = getPartnerSettings();
@@ -164,14 +177,13 @@ function callProxy(terms) {
 
      // Fill the context array
     for (i in terms) {
-        data["contextKeywords"].push({"weight": 1.0 / terms.length, "text": terms[i]});
+        data["contextKeywords"].push({"text": terms[i]});
     }
 
     // Options object, that specifies the method, content type and payload of the HTTPRequest
     var options = {
         "method": "POST",
         "contentType": "application/json",
-        "origin": "gdocs",
         "headers": {
             "Accept": "application/json"
         },
@@ -187,6 +199,11 @@ function callProxy(terms) {
 
 var DEFAULT_LOCALE = 'en';
 
+/**
+ * Returns the user's current locale. If his locale is not supported the DEFAULT_LOCALE will be chosen.
+ *
+ * @returns {String} user's locale
+ */
 function getLocale() {
     var locale = Session.getActiveUserLocale();
 
@@ -201,8 +218,8 @@ var messages;
 var defaultMessages;
 
 /**
- * Returns the internationalized message corresponding to the given key. Default language English will be chosen if
- * user's locale is not supported.
+ * Returns the internationalized message corresponding to the given key. DEFAULT_LOCALE will be chosen if no translation
+ * is available for the user's locale.
  *
  * @param key   message's key
  * @returns {String} internationalized message
@@ -237,11 +254,11 @@ function openSettingsDialog() {
 /**
  * Fetches the supported providers from the privacy proxy.
  *
- * @returns {*} supported providers
+ * @returns {String} supported providers
  */
 function fetchProviders() {
     // privacy proxy URL
-    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/getRegisteredPartners";
+    var url = serverUrl + "getRegisteredPartners";
 
     try {
         var response = UrlFetchApp.fetch(url);
@@ -301,6 +318,8 @@ function setProperty(key, value) {
 
 /**
  * Returns the partner settings.
+ *
+ * @returns {String}    partner settings
  */
 function getPartnerSettings() {
     // get all available partners
@@ -361,12 +380,15 @@ function inArray( elem, arr, arrKey) {
 }
 
 /**
- * Inserts a link right after the current cursor position/selection.
+ * Inserts a link right after the current cursor position/selection and logs this event.
  *
- * @param link          link's uri
  * @param displayName   link's name to display
+ * @param documentBadge documentBadge needed for logging containing the link's uri
+ * @param queryID       current query's id needed for logging
  */
-function insertLink(link, displayName) {
+function insertLink(displayName, documentBadge, queryID) {
+    var uri = documentBadge.uri;
+
     var doc = DocumentApp.getActiveDocument();
 
     var cursor = doc.getCursor();
@@ -379,7 +401,7 @@ function insertLink(link, displayName) {
         cursor.insertText(' ');
 
         var element = cursor.insertText(displayName);
-        element.setLinkUrl(link);
+        element.setLinkUrl(uri);
 
         // If the cursor follows a non-space character, insert a space and then the link.
         if (surroundingTextOffset > 0 && surroundingText.charAt(surroundingTextOffset - 1) != ' ')
@@ -400,18 +422,23 @@ function insertLink(link, displayName) {
             var offset = element.getEndOffsetInclusive() + 1;
 
             text.insertText(offset, ' ' + displayName);
-            text.setLinkUrl(offset + 1, offset + displayName.length, link);
+            text.setLinkUrl(offset + 1, offset + displayName.length, uri);
         }
     }
+
+    logItemCitedAsHyperlink(documentBadge, queryID);
 }
 
 /**
- * Inserts an image specified by its uri to a new paragraph after the current cursor position/selection.
+ * Inserts an image specified by its uri to a new paragraph after the current cursor position/selection and logs this
+ * event.
  *
  * @param date  current date for image citation string
- * @param uri   image's uri
+ * @param image image's uri
+ * @param documentBadge documentBadge needed for logging
+ * @param queryID       current query's id needed for logging
  */
-function insertImage(date, uri) {
+function insertImage(date, image, documentBadge, queryID) {
     var doc = DocumentApp.getActiveDocument();
     var cursor = doc.getCursor();
     var paragraph;
@@ -445,11 +472,79 @@ function insertImage(date, uri) {
 
         // insert image
         var insertedParagraph = body.insertParagraph(paragraphIndex, '');
-        var img = UrlFetchApp.fetch(uri).getBlob();
+        var img = UrlFetchApp.fetch(image).getBlob();
         insertedParagraph.appendInlineImage(img);
 
         // insert citation with current date
         insertedParagraph.appendText('\r' + msg('CITATION_IMAGE_RETRIEVED') + " " + date + " " + msg('CITATION_IMAGE_AT') + " ");
-        insertedParagraph.appendText(uri).setLinkUrl(uri);
+        insertedParagraph.appendText(image).setLinkUrl(image);
+    }
+
+    logItemCitedAsImage(documentBadge, queryID);
+}
+
+/**
+ * Logs that the given item was opened by the user.
+ *
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logItemOpened(documentBadge, queryID) {
+    logEvent("itemOpened", documentBadge, queryID);
+}
+
+/**
+ * Logs that the given item was cited in a document as image.
+ *
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logItemCitedAsImage(documentBadge, queryID) {
+    logEvent("itemCitedAsImage", documentBadge, queryID);
+}
+
+/**
+ * Logs that the given item was cited in a document as hyperlink.
+ *
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logItemCitedAsHyperlink(documentBadge, queryID) {
+    logEvent("itemCitedAsHyperlink", documentBadge, queryID);
+}
+
+/**
+ * Logs a given event for a specified item.
+ *
+ * @param event         event's name to complete the server url
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logEvent(event, documentBadge, queryID) {
+    // privacy proxy URL
+    var url = serverUrl + "log/" + event;
+
+    // POST payload
+    var data = {
+        "content": {
+            "documentBadge": documentBadge
+        },
+        "origin": origin,
+        "queryID": queryID
+    };
+
+    // Options object, that specifies the method, content type and payload of the HTTPRequest
+    var options = {
+        "method": "POST",
+        "contentType": "application/json",
+        "headers": {
+            "Accept": "application/json"
+        },
+        "payload": JSON.stringify(data)
+    };
+    try {
+        UrlFetchApp.fetch(url, options);
+    } catch (err) {
+        // suppress error -> not relevant for end user
     }
 }

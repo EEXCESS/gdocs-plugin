@@ -112,6 +112,8 @@
         }
     };
 
+    var previewImageUrl = "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=";
+
     /**
      * Diplays the results given as parameter.
      *
@@ -129,6 +131,7 @@
         }
 
         if (!(data === null || data.totalResults === 0 || data.totalResults === '0')) { // show results
+            var queryID = data.queryID;
             var items = data.result;
             for (var i = 0, len = items.length; i < len; i++) {
                 var item = items[i];
@@ -159,6 +162,10 @@
                 // link
                 var uri = item.documentBadge.uri;
                 var link = $('<a href="' + uri +  '" target="_blank" title="' + description + '"></a>');
+                link.data('documentBadge', item.documentBadge);
+                link.click(function () {
+                    google.script.run.logItemOpened($(this).data('documentBadge'), queryID);
+                });
                 resultContent.append(link);
                 resultContent = link;
 
@@ -166,20 +173,18 @@
                 var title = item.title;
                 if (typeof title === 'undefined') {
                     title = '<?!= msg('SEARCH_RESULT_LIST_NO_TITLE') ?>';
-                } else {
-                    title = this._formatTitle(title);
                 }
-                resultContent.append($('<span class="result-title">' + title + '</span>'));
+                resultContent.append($('<span class="result-title">' + this._formatTitle(title) + '</span>'));
 
                 // insert link buttons
                 var insertAsLinkButton = $(
                         '<div class="image-button">' +
                         '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_LINK') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/link.png">' +
                 '</div>');
-                insertAsLinkButton.data('uri', uri);
-                insertAsLinkButton.data('title', title);
+                insertAsLinkButton.data('displayName', title);
+                insertAsLinkButton.data('documentBadge', item.documentBadge);
                 insertAsLinkButton.click(function() {
-                    google.script.run.insertLink($(this).data('uri'), $(this).data('title'));
+                    google.script.run.insertLink($(this).data('displayName'), $(this).data('documentBadge'), queryID);
                 });
                 resultButtons.append(insertAsLinkButton);
 
@@ -195,18 +200,19 @@
                 // image
                 var image = item.previewImage;
                 if (typeof image === 'undefined' || image === '') {
-                    image = "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType;
+                    image = previewImageUrl + mediaType;
                 } else { // add item to image gallery and insert button
-                    this._addImageToGallery(image, title, uri);
+                    this._addImageToGallery(image, title, item.documentBadge);
 
                     // insert image button
                     var insertImageButton = $(
                             '<div class="image-button result-btn-insert-image">' +
                             '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
                     '</div>');
-                    insertImageButton.data('uri', image);
+                    insertImageButton.data('image', image);
+                    insertImageButton.data('documentBadge', item.documentBadge);
                     insertImageButton.click(function() {
-                        google.script.run.insertImage(getDateString(), $(this).data('uri'));
+                        google.script.run.insertImage(getDateString(), $(this).data('image'), $(this).data('documentBadge'), queryID);
                     });
                     resultButtons.append(insertImageButton);
                 }
@@ -234,7 +240,7 @@
             this._results.find('.result-image').error(function() {
                 $(this).unbind("error");
                 var mediaType = $(this).attr("mediaType");
-                $(this).attr("src", "http://eexcess-dev.joanneum.at/eexcess-federated-recommender-web-service-1.0-SNAPSHOT/recommender/getPreviewImage?type=" + mediaType);
+                $(this).attr("src", previewImageUrl + mediaType);
             });
         }
 
@@ -258,6 +264,12 @@
         return title;
     };
 
+    /**
+     * Formats a date by cutting it to a maximal length of 7 characters.
+     *
+     * @param date  date to format
+     * @returns {String}    formatted date
+     */
     SearchResultList.prototype._formatDate = function(date) {
         var maxDateLength = 7;
 
@@ -268,6 +280,12 @@
         return date;
     };
 
+    /**
+     * Returns a media type's name in the current user's locale.
+     *
+     * @param mediaType
+     * @return {String} internationalized name of the media type
+     */
     SearchResultList.prototype._getMediaTypeName = function(mediaType) {
         switch (mediaType) {
             case 'text':
@@ -300,11 +318,12 @@
     /**
      * Adds an image to the gallery. The image will be placed in the gallery which has currently the smallest height.
      *
-     * @param   image   image's uri
-     * @param   title   recommendation's title
-     * @param   uri     recommendation's uri
+     * @param   image           image's uri
+     * @param   title           recommendation's title
+     * @param   documentBadge   recommendation's document badge
      */
-    SearchResultList.prototype._addImageToGallery  =  function(image, title, uri) {
+    SearchResultList.prototype._addImageToGallery  =  function(image, title, documentBadge) {
+        var uri = documentBadge.uri;
         var div = $('<div class="gallery-item"></div>');
 
         // add image
@@ -332,9 +351,10 @@
                 '<div class="image-button gallery-btn-insert-image">' +
                 '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
         '</div>');
-        insertButton.data('uri', image);
+        insertButton.data('image', image);
+        insertButton.data('documentBadge', documentBadge);
         insertButton.click(function() {
-            google.script.run.insertImage(getDateString(), $(this).data('uri'));
+            google.script.run.insertImage(getDateString(), $(this).data('image'), $(this).data('documentBadge'), queryID);
         });
         div.append(insertButton);
     };
@@ -389,8 +409,8 @@
      * Shortens a given string to the given length plus the remaining characters until the next word.
      * starts.
      *
-     * @param string   string to shorten
-     * @param   length  desired length
+     * @param   string      string to shorten
+     * @param   length      desired length
      * @returns {string}    shortened string
      */
     function shortenString(string, length) {
@@ -409,13 +429,18 @@
     /**
      * Formats a string to lowercase and replaces space with '-'.
      *
-     * @param string
-     * @returns {string}
+     * @param   string      string to format
+     * @returns {string}    formatted string
      */
     function formatString(string) {
         return string.replace(/\s+/g, '-').toLowerCase();
     }
 
+    /**
+     * Returns the current date as string in the user's locale.
+     *
+     * @return {string} current date
+     */
     function getDateString() {
         var date = new Date();
         return date.toLocaleDateString("<?!= getLocale() ?>", {month: "long", day: "2-digit", year: "numeric"});
