@@ -102,38 +102,6 @@ function getSelectedText() {
     }
 }
 
-/**
- * Fetches the recommendations for the given text.
- *
- * @param {Array<String>}   text for which the recommendations should be fetched
- * @return {String} The response as JSON string.
- */
-function fetchRecommendations(text) {
-    return callProxy(getTerms(text));
-}
-
-/**
- * Gets the recommendations from the selected user text.
- *
- * @param {Array<String>} text The text entered by the user as array.
- *
- * @return {Array<String>} The terms as an array.
- */
-function getTerms(text) {
-    var terms = [];
-
-    // Split the text into terms
-    for(t in text) {
-        var tmp = text[t].split(" ");
-        for(i in tmp) {
-            // Replace multiple whitespaces and punctuation marks from the terms
-            terms.push(tmp[i].replace(/\s/g, "").replace(/[\.,#-\/!$%\^&\*;:{}=\-_`~()]/g,""));
-        }
-    }
-
-    return terms;
-}
-
 var serverUrl = "https://eexcess-dev.joanneum.at/eexcess-privacy-proxy-issuer-1.0-SNAPSHOT/issuer/";
 var origin = {
     "clientType": "EEXCESS - Google Docs AddOn",
@@ -143,13 +111,13 @@ var origin = {
 };
 
 /**
- * Calls the privacy proxy
+ * Calls the privacy proxy for fetching the recommendations for the given keywords.
  *
- * @param {Array<String>} terms The single terms.
+ * @param {Array<String>} keywords The single keywords.
  *
  * @return {String} The response as JSON string.
  */
-function callProxy(terms) {
+function fetchRecommendations(keywords) {
     // privacy proxy URL
     var url = serverUrl + "recommend";
 
@@ -176,8 +144,8 @@ function callProxy(terms) {
     }
 
      // Fill the context array
-    for (i in terms) {
-        data["contextKeywords"].push({"text": terms[i]});
+    for (i in keywords) {
+        data["contextKeywords"].push({"text": keywords[i]});
     }
 
     // Options object, that specifies the method, content type and payload of the HTTPRequest

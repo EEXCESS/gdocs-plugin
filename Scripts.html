@@ -7,7 +7,7 @@
 
     // global variables
     var lastSelectedText;
-    var lastSearchedText;
+    var lastSearchedKeywords;
     var searchResultList;
 
     /**
@@ -21,7 +21,7 @@
             }
         });
 
-        $('#btn-search').click(getRecommendationsFromInput);
+        $('#btn-search').click(getRecommendationsFromSearchBarInput);
 
         // init search results list
         searchResultList = new SearchResultList();
@@ -36,17 +36,52 @@
     }
 
     /**
-     * Runs a server-side function to get the recommendations for the user-entered text and update
-     * the sidebar UI with the results from the privacy proxy.
+     * Runs a server-side function to get the recommendations for the user-entered text entered into the search bar and
+     * updates the sidebar UI with the results from the privacy proxy.
      */
-    function getRecommendationsFromInput() {
-        var keyword = $("#eexcess-search").val();
-        if(keyword == "") {
+    function getRecommendationsFromSearchBarInput() {
+        var searchInput = $("#eexcess-search").val();
+
+        var subStrings = searchInput.split('"');
+        var keywords = [];
+
+        for (var subStringIdx = 0; subStringIdx < subStrings.length; subStringIdx++) {
+            var str = subStrings[subStringIdx].trim();
+
+            if ((subStringIdx % 2) == 1) { // odd -> string
+                str = removePunctuationMarks(str);
+
+                if (str !== "")
+                    keywords.push(str);
+            } else { // even -> single keyword(s)
+                var singleWords = str.split(' ');
+
+                for (var singleWordIdx = 0; singleWordIdx < singleWords.length; singleWordIdx++) {
+                    var word = singleWords[singleWordIdx];
+                    word = removePunctuationMarks(word);
+
+                    if (word !== "")
+                        keywords.push(word);
+                }
+            }
+        }
+
+        if (keywords.length === 0) {
             searchResultList.showError('<?!= msg('SEARCHBAR_EMPTY') ?>');
         } else {
             this.disabled = true;
-            fetchAndDisplayRecommendations(keyword, this);
+            fetchAndDisplayRecommendations(keywords, this);
         }
+    }
+
+    /**
+     * Removes punctuation marks from the given term.
+     *
+     * @param {String}  term
+     * @return {String} term without punctuation marks
+     */
+    function removePunctuationMarks(term) {
+        return term.replace(/[\.,#-\/!$%\^&\*;:{}=\-_`~()“”]/g,"");
     }
 
     /**
@@ -59,8 +94,33 @@
                 function(selectedText) {
                     if (selectedText.length > 0 && !arraysEqual(selectedText, lastSelectedText)) {
                         lastSelectedText = selectedText;
-                        $("#eexcess-search").val(selectedText);
-                        $('#btn-search').click();
+
+                        // extract keywords
+                        var keywords = [];
+
+                        // Split the text into keywords
+                        for (var selectedTextIdx = 0; selectedTextIdx < selectedText.length; selectedTextIdx++) {
+                            var text = selectedText[selectedTextIdx];
+                            var words = text.split(" ");
+
+                            for (var wordIdx = 0; wordIdx < words.length; wordIdx++) {
+                                var word = words[wordIdx];
+                                word = removePunctuationMarks(word);
+
+                                if (word !== "")
+                                    keywords.push(word);
+                            }
+                        }
+
+                        if (keywords.length > 0) {
+                            var keywordString = keywords[0];
+                            for (var keywordIdx = 1; keywordIdx < keywords.length; keywordIdx++) {
+                                keywordString += " " + keywords[keywordIdx];
+                            }
+
+                            $("#eexcess-search").val(keywordString);
+                            fetchAndDisplayRecommendations(keywords);
+                        }
                     }
                 })
                 .withFailureHandler(
@@ -79,18 +139,18 @@
      * @param {String} or {Array<String>} text  text for which the recommendations should be fetched
      * @param button    disabled button which triggered the action or undefined if action was not triggered by a button
      */
-    function fetchAndDisplayRecommendations(text, button){
+    function fetchAndDisplayRecommendations(keywords, button){
         searchResultList.showAjaxLoader();
 
         var responded = false;
         var timeout = false;
-        lastSearchedText = text;
+        lastSearchedKeywords = keywords;
 
         setTimeout(function() {
             if(!responded) {
                 timeout = true;
 
-                if (lastSearchedText == text)
+                if (lastSearchedKeywords == keywords)
                     searchResultList.showError("<?!= msg('TIMEOUT') ?>");
 
                 if (button)
@@ -101,7 +161,7 @@
         google.script.run
                 .withSuccessHandler(
                 function(recommendations, button) {
-                    if(!timeout && lastSearchedText == text){
+                    if(!timeout && lastSearchedKeywords == keywords){
                         responded = true;
                         searchResultList.showResults(recommendations);
 
@@ -111,7 +171,7 @@
                 })
                 .withFailureHandler(
                 function(errorMsg, button) {
-                    if(!timeout && lastSearchedText == text) {
+                    if(!timeout && lastSearchedKeywords == keywords) {
                         responded = true;
                         searchResultList.showError(errorMsg);
 
@@ -120,7 +180,7 @@
                     }
                 })
                 .withUserObject(button)
-                .fetchRecommendations([text]);
+                .fetchRecommendations(keywords);
     }
 
     /**
