@@ -102,7 +102,7 @@ function getSelectedText() {
     }
 }
 
-var serverUrl = "https://eexcess-dev.joanneum.at/eexcess-privacy-proxy-issuer-1.0-SNAPSHOT/issuer/";
+var serverUrl = "https://eexcess.joanneum.at/eexcess-privacy-proxy-issuer-1.0-SNAPSHOT/issuer/";
 var origin = {
     "clientType": "EEXCESS - Google Docs AddOn",
     "clientVersion": "8.0", //the deployment version in the webstore
