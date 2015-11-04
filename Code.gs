@@ -102,54 +102,35 @@ function getSelectedText() {
     }
 }
 
-/**
- * Fetches the recommendations for the given text.
- *
- * @param {Array<String>}   text for which the recommendations should be fetched
- * @return {String} The response as JSON string.
- */
-function fetchRecommendations(text) {
-    return callProxy(getTerms(text));
-}
+var serverUrl = "https://eexcess.joanneum.at/eexcess-privacy-proxy-issuer-1.0-SNAPSHOT/issuer/";
+var origin = {
+    "clientType": "EEXCESS - Google Docs AddOn",
+    "clientVersion": "8.0", //the deployment version in the webstore
+    "module": "Sidebar",
+    "userID": Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Session.getActiveUser().getEmail()).toString() // hash value of uid here: MD5(User-Mail)
+};
 
 /**
- * Gets the recommendations from the selected user text.
+ * Calls the privacy proxy for fetching the recommendations for the given keywords.
  *
- * @param {Array<String>} text The text entered by the user as array.
- *
- * @return {Array<String>} The terms as an array.
- */
-function getTerms(text) {
-    var terms = [];
-
-    // Split the text into terms
-    for(t in text) {
-        var tmp = text[t].split(" ");
-        for(i in tmp) {
-            // Replace multiple whitespaces and punctuation marks from the terms
-            terms.push(tmp[i].replace(/\s/g, "").replace(/[\.,#-\/!$%\^&\*;:{}=\-_`~()]/g,""));
-        }
-    }
-
-    return terms;
-}
-
-/**
- * Calls the privacy proxy
- *
- * @param {Array<String>} terms The single terms.
+ * @param {Array<String>} keywords The single keywords.
  *
  * @return {String} The response as JSON string.
  */
-function callProxy(terms) {
+function fetchRecommendations(keywords) {
     // privacy proxy URL
-    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/recommend";
+    var url = serverUrl + "recommend";
 
     // get result number
     var numResults = getResultNumber();
 
     // POST payload
-    var data = {"numResults": numResults, "partnerList": [], "contextKeywords": []};
+    var data = {
+        "numResults": numResults,
+        "partnerList": [],
+        "contextKeywords": [],
+        "origin": origin
+    };
 
     // set partners
     var partners = getPartnerSettings();
@@ -163,15 +144,14 @@ function callProxy(terms) {
     }
 
      // Fill the context array
-    for (i in terms) {
-        data["contextKeywords"].push({"weight": 1.0 / terms.length, "text": terms[i]});
+    for (i in keywords) {
+        data["contextKeywords"].push({"text": keywords[i]});
     }
 
     // Options object, that specifies the method, content type and payload of the HTTPRequest
     var options = {
         "method": "POST",
         "contentType": "application/json",
-        "origin": "gdocs",
         "headers": {
             "Accept": "application/json"
         },
@@ -185,28 +165,46 @@ function callProxy(terms) {
     }
 }
 
+var DEFAULT_LOCALE = 'en';
+
 /**
- * Returns the internationalized message corresponding to the given key. Default language English will be chosen if
- * user's locale is not supported.
+ * Returns the user's current locale. If his locale is not supported the DEFAULT_LOCALE will be chosen.
+ *
+ * @returns {String} user's locale
+ */
+function getLocale() {
+    var locale = Session.getActiveUserLocale();
+
+    if (locale === 'de') {
+        return locale;
+    } else { // return default locale
+        return DEFAULT_LOCALE;
+    }
+}
+
+var messages;
+var defaultMessages;
+
+/**
+ * Returns the internationalized message corresponding to the given key. DEFAULT_LOCALE will be chosen if no translation
+ * is available for the user's locale.
  *
  * @param key   message's key
  * @returns {String} internationalized message
  */
 function msg(key) {
-    if (!this.messages){
-        var locale = Session.getActiveUserLocale();
-        var file;
-
-        if (locale == 'de') {
-            file = 'messages_de';
-        } else { // use default locale 'en'
-            file = 'messages'
-        }
-
-        this.messages = JSON.parse(HtmlService.createTemplateFromFile(file).evaluate().getContent());
+    if (!messages){
+        messages = JSON.parse(HtmlService.createTemplateFromFile('messages_' + getLocale()).evaluate().getContent());
+        defaultMessages = JSON.parse(HtmlService.createTemplateFromFile('messages_' + DEFAULT_LOCALE).evaluate().getContent());
     }
 
-    return this.messages[key];
+    var msg = messages[key];
+
+    if (!msg) {
+        msg = defaultMessages[key];
+    }
+
+    return msg
 }
 
 /**
@@ -224,14 +222,22 @@ function openSettingsDialog() {
 /**
  * Fetches the supported providers from the privacy proxy.
  *
- * @returns {*} supported providers
+ * @returns {String} supported providers
  */
 function fetchProviders() {
     // privacy proxy URL
-    var url = "http://eexcess-dev.joanneum.at/eexcess-privacy-proxy-1.0-SNAPSHOT/api/v1/getRegisteredPartners";
+    var url = serverUrl + "getRegisteredPartners";
+
+    // Options object, that specifies the method and accepted response type of the HTTPRequest
+    var options = {
+        "method": "GET",
+        "headers": {
+            "Accept": "application/json"
+        }
+    };
 
     try {
-        var response = UrlFetchApp.fetch(url);
+        var response = UrlFetchApp.fetch(url, options);
         return response.getContentText();
     } catch (err) {
         throw msg('ERROR');
@@ -288,6 +294,8 @@ function setProperty(key, value) {
 
 /**
  * Returns the partner settings.
+ *
+ * @returns {String}    partner settings
  */
 function getPartnerSettings() {
     // get all available partners
@@ -347,46 +355,67 @@ function inArray( elem, arr, arrKey) {
     return -1;
 }
 
-function insertLink(link, displayName) {
+/**
+ * Inserts a link right after the current cursor position/selection and logs this event.
+ *
+ * @param displayName   link's name to display
+ * @param documentBadge documentBadge needed for logging containing the link's uri
+ * @param queryID       current query's id needed for logging
+ */
+function insertLink(displayName, documentBadge, queryID) {
+    var uri = documentBadge.uri;
+
     var doc = DocumentApp.getActiveDocument();
-    var body = doc.getBody();
-    var paragraphIndex;
 
     var cursor = doc.getCursor();
     var paragraph;
 
     if (cursor) {
-        paragraph = cursor.getElement();
+        var surroundingText = cursor.getSurroundingText().getText();
+        var surroundingTextOffset = cursor.getSurroundingTextOffset();
+
+        cursor.insertText(' ');
+
+        var element = cursor.insertText(displayName);
+        element.setLinkUrl(uri);
+
+        // If the cursor follows a non-space character, insert a space and then the link.
+        if (surroundingTextOffset > 0 && surroundingText.charAt(surroundingTextOffset - 1) != ' ')
+            cursor.insertText(' ');
+
+        return;
     }
 
     var selection = doc.getSelection();
 
     if (selection) {
-        var selectedElements = selection.getSelectedElements();
-        var selectedElement = selectedElements[0];
+        var elements = selection.getRangeElements();
+        var element = elements[elements.length - 1];
 
-        //holds the paragraph
-        var paragraph = selectedElement.getElement();
-    }
+        var text = element.getElement().editAsText();
 
-    if (paragraph) {
-        while (paragraph.getType() !== DocumentApp.ElementType.PARAGRAPH) {
-            paragraph = paragraph.getParent();
+        if (text) {
+            var offset = element.getEndOffsetInclusive() + 1;
+
+            text.insertText(offset, ' ' + displayName);
+            text.setLinkUrl(offset + 1, offset + displayName.length, uri);
         }
-
-        //get the index of the paragraph in the body
-        paragraphIndex = body.getChildIndex(paragraph) + 1;
-
-        body.insertParagraph(paragraphIndex, '').appendText(displayName).setLinkUrl(link);
     }
+
+    logItemCitedAsHyperlink(documentBadge, queryID);
 }
 
-function insertImage(uri) {
+/**
+ * Inserts an image specified by its uri to a new paragraph after the current cursor position/selection and logs this
+ * event.
+ *
+ * @param date  current date for image citation string
+ * @param image image's uri
+ * @param documentBadge documentBadge needed for logging
+ * @param queryID       current query's id needed for logging
+ */
+function insertImage(date, image, documentBadge, queryID) {
     var doc = DocumentApp.getActiveDocument();
-    var body = doc.getBody();
-    var img = UrlFetchApp.fetch(uri).getBlob();
-    var paragraphIndex;
-
     var cursor = doc.getCursor();
     var paragraph;
 
@@ -394,7 +423,11 @@ function insertImage(uri) {
         paragraph = cursor.getElement();
     }
 
-    var selection = doc.getSelection();
+    var selection;
+
+    if (!paragraph) {
+        selection = doc.getSelection();
+    }
 
     if (selection) {
         var selectedElements = selection.getSelectedElements();
@@ -410,8 +443,84 @@ function insertImage(uri) {
         }
 
         //get the index of the paragraph in the body
-        paragraphIndex = body.getChildIndex(paragraph) + 1;
+        var body = doc.getBody();
+        var paragraphIndex = body.getChildIndex(paragraph) + 1;
 
-        body.insertParagraph(paragraphIndex, '').appendInlineImage(img);
+        // insert image
+        var insertedParagraph = body.insertParagraph(paragraphIndex, '');
+        var img = UrlFetchApp.fetch(image).getBlob();
+        insertedParagraph.appendInlineImage(img);
+
+        // insert citation with current date
+        insertedParagraph.appendText('\r' + msg('CITATION_IMAGE_RETRIEVED') + " " + date + " " + msg('CITATION_IMAGE_AT') + " ");
+        insertedParagraph.appendText(image).setLinkUrl(image);
+    }
+
+    logItemCitedAsImage(documentBadge, queryID);
+}
+
+/**
+ * Logs that the given item was opened by the user.
+ *
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logItemOpened(documentBadge, queryID) {
+    logEvent("itemOpened", documentBadge, queryID);
+}
+
+/**
+ * Logs that the given item was cited in a document as image.
+ *
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logItemCitedAsImage(documentBadge, queryID) {
+    logEvent("itemCitedAsImage", documentBadge, queryID);
+}
+
+/**
+ * Logs that the given item was cited in a document as hyperlink.
+ *
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logItemCitedAsHyperlink(documentBadge, queryID) {
+    logEvent("itemCitedAsHyperlink", documentBadge, queryID);
+}
+
+/**
+ * Logs a given event for a specified item.
+ *
+ * @param event         event's name to complete the server url
+ * @param documentBadge item's document badge
+ * @param queryID       current query's id
+ */
+function logEvent(event, documentBadge, queryID) {
+    // privacy proxy URL
+    var url = serverUrl + "log/" + event;
+
+    // POST payload
+    var data = {
+        "content": {
+            "documentBadge": documentBadge
+        },
+        "origin": origin,
+        "queryID": queryID
+    };
+
+    // Options object, that specifies the method, content type and payload of the HTTPRequest
+    var options = {
+        "method": "POST",
+        "contentType": "application/json",
+        "headers": {
+            "Accept": "application/json"
+        },
+        "payload": JSON.stringify(data)
+    };
+    try {
+        UrlFetchApp.fetch(url, options);
+    } catch (err) {
+        // suppress error -> not relevant for end user
     }
 }
