@@ -2,10 +2,22 @@
 
 ## How this addon works
 
-1. Go to: https://docs.google.com/document/d/1hqLocWCyKMQQr254gDO_BWfm6tDBmqMFz7IPqOvbKhA/edit
-2. Login with your Google Account to be able to use this addon 
-3. Activate the plugin (Top Menu: Addons -> EEXCESS -> Start)
-4. Select a piece of text or use the search bar to search for recommendations. After a short while the recommendations will be displayed in the sidebar.
+You can simply install this addon from the Google Add-On Store by either
+ 1. navigating directly to it https://chrome.google.com/webstore/detail/e-explorer/ldhpoddoeakgahcoammcpkbchphakcmh, or 
+ 2. searching for "E-Explorer" in the store. 
+ 3. Activate the plugin (Top Menu: Addons -> E-Explorer -> Start)
+ 4. Select a piece of text or use the search bar to search for recommendations. After a short while the recommendations will be displayed in the sidebar.
+
+You will need to be logged in with your Google Account to do this. 
+
+The add-on installation is tied to your Google Account, so it works in all your documents (when you are logged in). 
+
+## Troubleshooting
+In case the menue only shows "E-Explorer->Help" and "Start" is missing, do the following:
+
+- click on "Addons->Manage Add-ons" 
+- Select E-Explorer and "Activate for this document"
+- RELOAD the document in the browser
 
 ## Source Code
 
