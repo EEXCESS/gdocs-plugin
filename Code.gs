@@ -1,4 +1,4 @@
-/*  Copyright 2015 University of Passau
+/*  Copyright 2016 University of Passau
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
@@ -42,6 +42,7 @@ function onInstall(e) {
  */
 function showSidebar() {
     var ui = HtmlService.createTemplateFromFile('Sidebar').evaluate()
+        .setSandboxMode(HtmlService.SandboxMode.IFRAME)
         .setTitle('E-Explorer');
     DocumentApp.getUi().showSidebar(ui);
 }
@@ -52,7 +53,9 @@ function showSidebar() {
  * @return {string} The file's content.
  */
 function include(file) {
-    return HtmlService.createTemplateFromFile(file).evaluate().getContent();
+    return HtmlService.createTemplateFromFile(file).evaluate()
+        .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+        .getContent();
 }
 
 /**
@@ -194,8 +197,13 @@ var defaultMessages;
  */
 function msg(key) {
     if (!messages){
-        messages = JSON.parse(HtmlService.createTemplateFromFile('messages_' + getLocale()).evaluate().getContent());
-        defaultMessages = JSON.parse(HtmlService.createTemplateFromFile('messages_' + DEFAULT_LOCALE).evaluate().getContent());
+        messages = JSON.parse(
+            HtmlService.createTemplateFromFile('messages_' + getLocale()).evaluate()
+                .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+                .getContent());
+        defaultMessages = JSON.parse(HtmlService.createTemplateFromFile('messages_' + DEFAULT_LOCALE).evaluate()
+            .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+            .getContent());
     }
 
     var msg = messages[key];

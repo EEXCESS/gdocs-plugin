@@ -1,53 +1,58 @@
-<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
-<!-- The CSS package above applies Google styling to buttons and other elements. -->
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
 
-<style>
-    .settings-label {
-        font-size: 1.1em;
-        margin-bottom: 10px;
-    }
+    <style>
+        .settings-label {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
 
-    #input-result-number {
-        margin-right: 5px;
-        width: 60px;
-    }
+        #input-result-number {
+            margin-right: 5px;
+            width: 60px;
+        }
 
-    .provider-settings {
-        position: absolute;
-        top: 83px;
-        right: 8px;
-        left: 8px;
-        width: auto;
-    }
+        .provider-settings {
+            position: absolute;
+            top: 83px;
+            right: 8px;
+            left: 8px;
+            width: auto;
+        }
 
-    #ajax-loader {
-        width: 16px;
-        height: 16px;
-        margin-left: auto;
-        margin-right: auto;
-        display: block;
-        padding: 10px;
-    }
+        #ajax-loader {
+            width: 16px;
+            height: 16px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            padding: 10px;
+        }
 
-    #providers {
-        position: absolute;
-        top: 111px;
-        bottom: 67px;
-        overflow-y: auto;
-        left: 8px;
-        right: 8px;
-        overflow-x: hidden;
-    }
+        #providers {
+            position: absolute;
+            top: 111px;
+            bottom: 67px;
+            overflow-y: auto;
+            left: 8px;
+            right: 8px;
+            overflow-x: hidden;
+        }
 
-    .settings-buttons {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        height: 29px;
-        right: 8px;
-    }
-</style>
-
+        .settings-buttons {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            height: 29px;
+            right: 8px;
+        }
+    </style>
+</head>
+<body>
 <div class="modal-dialog-content script-prompt-contents">
     <div class="settings-label"><?!= msg('SETTINGS_RESULT_NUM') ?>:</div>
     <div>
@@ -57,7 +62,7 @@
 
     <div class="settings-label provider-settings"><?!= msg('SETTINGS_PROVIDERS') ?>:</div>
     <div id="providers">
-        <img id="ajax-loader" src="http://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />
+        <img id="ajax-loader" src="https://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />
     </div>
 </div>
 
@@ -75,46 +80,46 @@
         // load settings
         google.script.run
                 .withSuccessHandler(
-                function (settings) {
-                    try {
-                        settings = JSON.parse(settings);
-                    } catch (e) {
-                        settings = [];
-                    }
+                        function (settings) {
+                            try {
+                                settings = JSON.parse(settings);
+                            } catch (e) {
+                                settings = [];
+                            }
 
-                    $('#ajax-loader').hide();
+                            $('#ajax-loader').hide();
 
-                    for (var i = 0; i < settings.length; i++) {
-                        var partner = settings[i];
-                        var div = $('<div></div>');
+                            for (var i = 0; i < settings.length; i++) {
+                                var partner = settings[i];
+                                var div = $('<div></div>');
 
-                        if (partner.active) {
-                            div.append('<input type="checkbox" id="checkbox' + i + '" checked>');
-                        } else {
-                            div.append('<input type="checkbox" id="checkbox' + i + '">');
-                        }
+                                if (partner.active) {
+                                    div.append('<input type="checkbox" id="checkbox' + i + '" checked>');
+                                } else {
+                                    div.append('<input type="checkbox" id="checkbox' + i + '">');
+                                }
 
-                        div.append('<label for="checkbox' + i + '">' + partner.name + '</label>');
-                        $('#providers').append(div);
-                    }
-                })
+                                div.append('<label for="checkbox' + i + '">' + partner.name + '</label>');
+                                $('#providers').append(div);
+                            }
+                        })
                 .withFailureHandler(
-                function (error) {
-                    // ignore errors
-                    alert(error); // TODO rm
-                })
+                        function (error) {
+                            // ignore errors
+                            alert(error); // TODO rm
+                        })
                 .getPartnerSettings();
 
         google.script.run
                 .withSuccessHandler(
-                function (resultNumber) {
-                    $('#input-result-number').val(resultNumber);
-                })
+                        function (resultNumber) {
+                            $('#input-result-number').val(resultNumber);
+                        })
                 .withFailureHandler(
-                function (error) {
-                    // ignore errors
-                    alert(error); // TODO rm
-                })
+                        function (error) {
+                            // ignore errors
+                            alert(error); // TODO rm
+                        })
                 .getResultNumber();
 
         // store settings
@@ -147,13 +152,13 @@
         // make settings persistent on server
         google.script.run
                 .withSuccessHandler(
-                function () {
-                    google.script.host.close();
-                })
+                        function () {
+                            google.script.host.close();
+                        })
                 .withFailureHandler(
-                function () {
-                    showError('<?!= msg('ERROR') ?>');
-                })
+                        function () {
+                            showError('<?!= msg('ERROR') ?>');
+                        })
                 .saveSettings(resultNumber, partnerSettings);
     }
 
@@ -167,3 +172,5 @@
         $('#result-number-error').hide();
     }
 </script>
+</body>
+</html>
