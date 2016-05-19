@@ -29,13 +29,6 @@ The add-on installation is tied to your Google Account, so it works in all your 
 3. Select a piece of text or use the search bar to search for recommendations. After a short while the recommendations will be displayed in the sidebar.
 4. To submit multiple words as one keyword surround them with "
 
-## Troubleshooting
-In case the menu only shows "E-Explorer->Help" and "Start" is missing, do the following:
-
-- click on "Addons->Manage Add-ons" 
-- Select E-Explorer and "Activate for this document"
-- RELOAD the document in the browser
-
 ## Source Code
 
 The source code can be found (and edited) directly inside the browser. If you want to do this, you have to open the Script Editor (Top Menu: Tools -> Script Editor).

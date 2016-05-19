@@ -1,8 +1,13 @@
-<?!= include('Stylesheet') ?>
-
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <?!= include('Stylesheet') ?>
+</head>
+<body>
 <div id="header" class="sidebar fixed-top">
     <div id="search-container" class="form-group inline-form">
-        <input id="eexcess-search" placeholder="Search" aria-label="<?!= msg('SEARCHBAR_SEARCH') ?>" type="text" />
+        <input id="eexcess-search" placeholder="Search" aria-label="<?!= msg('SEARCHBAR_SEARCH') ?>" type="text"/>
         <button class="action" id="btn-search"><?!= msg('SEARCHBAR_SEARCH') ?></button>
     </div>
     <div class="tab-container">
@@ -21,7 +26,7 @@
             </li>
         </ul>
         <div id="settings-button" class="image-button">
-            <img title="<?!= msg('SETTINGS') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/settings.png">
+            <img title="<?!= msg('SETTINGS') ?>" src="https://www.dimis.fim.uni-passau.de/eexcess/settings.png">
         </div>
     </div>
 </div>
@@ -32,7 +37,7 @@
     <div class="block"></div>
     <a href="http://eexcess.eu/" title="EEXCESS" target="_blank">
         <div class="branding-container">
-            <img alt="Add-on logo" class="logo" src="http://dimis.fim.uni-passau.de/eexcess/eexcess_Logo_neu1.jpg">
+            <img alt="Add-on logo" class="logo" src="https://www.dimis.fim.uni-passau.de/eexcess/eexcess_Logo_neu1.jpg">
         </div>
         <div class="branding-text">
             <span class="gray"><?!= msg('BRANDING_TEXT') ?></span>
@@ -42,3 +47,5 @@
 
 <?!= include('SearchResultList') ?>
 <?!= include('Scripts') ?>
+</body>
+</html>

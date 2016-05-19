@@ -17,7 +17,7 @@
 
         // messages
         this._messages = $('<div id="messages"></div>');
-        this._loader = $('<img id="ajax-loader" src="http://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />');
+        this._loader = $('<img id="ajax-loader" src="https://www.dimis.fim.uni-passau.de/eexcess/ajax-loader.gif" alt="<?!= msg('LOADING') ?>" />');
         this._error = $('<span id="error-msg" class="error"></span>');
         this._info = $('<span id="info-msg"></span>');
 
@@ -179,7 +179,7 @@
                 // insert link buttons
                 var insertAsLinkButton = $(
                         '<div class="image-button">' +
-                        '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_LINK') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/link.png">' +
+                        '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_LINK') ?>" src="https://www.dimis.fim.uni-passau.de/eexcess/link.png">' +
                 '</div>');
                 insertAsLinkButton.data('displayName', title);
                 insertAsLinkButton.data('documentBadge', item.documentBadge);
@@ -202,12 +202,12 @@
                 if (typeof image === 'undefined' || image === '') {
                     image = previewImageUrl + mediaType;
                 } else { // add item to image gallery and insert button
-                    this._addImageToGallery(image, title, item.documentBadge);
+                    this._addImageToGallery(image, title, item.documentBadge, queryID);
 
                     // insert image button
                     var insertImageButton = $(
                             '<div class="image-button result-btn-insert-image">' +
-                            '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
+                            '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="https://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
                     '</div>');
                     insertImageButton.data('image', image);
                     insertImageButton.data('documentBadge', item.documentBadge);
@@ -322,7 +322,7 @@
      * @param   title           recommendation's title
      * @param   documentBadge   recommendation's document badge
      */
-    SearchResultList.prototype._addImageToGallery  =  function(image, title, documentBadge) {
+    SearchResultList.prototype._addImageToGallery  =  function(image, title, documentBadge, queryID) {
         var uri = documentBadge.uri;
         var div = $('<div class="gallery-item"></div>');
 
@@ -349,7 +349,7 @@
         // add insert button
         var insertButton = $(
                 '<div class="image-button gallery-btn-insert-image">' +
-                '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="http://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
+                '<img title="<?!= msg('SEARCH_RESULT_LIST_INSERT_IMAGE') ?>" src="https://www.dimis.fim.uni-passau.de/eexcess/photo.png">' +
         '</div>');
         insertButton.data('image', image);
         insertButton.data('documentBadge', documentBadge);
